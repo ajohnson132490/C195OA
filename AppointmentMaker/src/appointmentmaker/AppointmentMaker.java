@@ -19,7 +19,7 @@ import static java.lang.System.*;
 
 /**
  *
- * @author LabUser
+ * @author ajohnson132490
  */
 public class AppointmentMaker extends Application {
     
