@@ -4,6 +4,10 @@
  */
 package appointmentmaker;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -11,6 +15,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import static java.lang.System.*;
 
 /**
  *
@@ -20,6 +25,14 @@ public class AppointmentMaker extends Application {
     
     @Override
     public void start(Stage primaryStage) {
+        String url = "jdbc:mysql://localhost:3306/client_schedule";
+        String username = "sqlUser";
+        String pass = "Passw0rd!";
+        try {
+        Connection conn = DriverManager.getConnection(url, username, pass);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         Button btn = new Button();
         btn.setText("Say 'Hello World'");
         btn.setOnAction(new EventHandler<ActionEvent>() {
