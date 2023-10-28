@@ -23,37 +23,22 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 
+
+
 /**
  *
  * @author ajohnson132490
  */
 public class AppointmentMaker extends Application {
+    private static final String URL = "jdbc:mysql://localhost:3306/client_schedule";
+    private static final String USERNAME = "sqlUser";
+    private static final String PASSWORD = "Passw0rd!";
     
     @Override
     public void start(Stage primaryStage) {
         //Set Language
         Locale locale = new Locale("fr", "FR");
         ResourceBundle lang = ResourceBundle.getBundle("appointmentmaker.lang", locale);
-        
-        //Connecting to the database
-        String url = "jdbc:mysql://localhost:3306/client_schedule";
-        String username = "sqlUser";
-        String pass = "Passw0rd!";
-        try {
-        Connection conn = DriverManager.getConnection(url, username, pass);
-        //Get some sample data
-        Statement stmt = conn.createStatement();
-        String query = "SELECT * FROM users";
-        ResultSet rs = stmt.executeQuery(query);
-        //Print all results
-        while (rs.next()) {
-            out.print(rs.getInt("User_ID") + "  ");
-            out.print(rs.getString("User_Name") + "  ");
-            out.print(rs.getString("Password") + "  \n");
-        }
-        } catch (Exception e) {
-            System.out.println(e);
-        }
         
         //Create the main VBox
         VBox mainVBox = new VBox();
@@ -84,7 +69,25 @@ public class AppointmentMaker extends Application {
             
             @Override
             public void handle(ActionEvent event) {
-                System.out.println(lang.getString("greeting"));
+                try {
+                    //Connect to the database
+                    Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                    
+                    //Query the database
+                    String query = "SELECT Password FROM users WHERE User_Name = ?";
+                    PreparedStatement stmt = conn.prepareStatement(query);
+                    stmt.setString(1, uField.getText());
+                    ResultSet rs = stmt.executeQuery();
+                    
+                    //Check if the password entered matches the username
+                    if (rs.next() && rs.getString("Password").equals(pField.getText())) {
+                        System.out.println("Login Success");
+                    } else {
+                        System.out.println("Username or password is incorrect");
+                    }
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
             }
         });
         
