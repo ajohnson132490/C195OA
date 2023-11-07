@@ -18,15 +18,23 @@ import java.time.ZoneId;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import static javafx.application.Application.launch;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+import javafx.util.Callback;
 
 
 
@@ -35,11 +43,29 @@ import javafx.scene.paint.Color;
  * @author ajohnson132490
  */
 public class AppointmentMaker extends Application {
+    private Connection conn;
     private static final String URL = "jdbc:mysql://localhost:3306/client_schedule";
     private static final String USERNAME = "sqlUser";
     private static final String PASSWORD = "Passw0rd!";
-    Locale locale;
-    ResourceBundle lang;
+    private Locale locale;
+    private ResourceBundle lang;
+    
+    //Helper Functions
+    public String customerTableColumnName(String attribute) {
+        return switch (attribute) {
+            case "Customer_ID" -> "ID";
+            case "Customer_Name" -> "Name";
+            case "Address" -> "Address";
+            case "Postal_Code" -> "Zip Code";
+            case "Phone" -> "Phone";
+            case "Create_Date" -> "Create Date";
+            case "Created_By" -> "Created By";
+            case "Last_Update" -> "Last Updated";
+            case "Last_Updated_By" -> "Last Updated By";
+            case "Division_ID" -> "Division ID";
+            default -> "oops";
+        };
+    }
     
     /**
      * The start function is the initial landing screen of the application
@@ -88,7 +114,7 @@ public class AppointmentMaker extends Application {
             public void handle(ActionEvent event) {
                 try {
                     //Connect to the database
-                    Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                    conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
                     
                     //Query the database
                     String query = "SELECT Password FROM users WHERE User_Name = ?";
@@ -176,6 +202,14 @@ public class AppointmentMaker extends Application {
     public void viewCustomers(Stage primaryStage) {
         //Create the main VBox
         VBox mainVBox = new VBox(15);
+        //Add all items to the root
+        Pane root = new Pane();
+        root.getChildren().add(mainVBox);
+        mainVBox.getStyleClass().add("mainPage");
+        
+        //Create Scene
+        Scene scene = new Scene(root, 1200, 400);
+        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
         
         //Create title HBox
         HBox upper = new HBox();
@@ -188,6 +222,7 @@ public class AppointmentMaker extends Application {
         //Creating tableview VBox
         VBox tableVBox = new VBox(5);
         
+        /*
         //Week or Month Radio Buttons
         HBox radioButtons = new HBox(20);
         ToggleGroup weekOrMonth = new ToggleGroup();
@@ -198,9 +233,53 @@ public class AppointmentMaker extends Application {
         month.setToggleGroup(weekOrMonth);
         radioButtons.getChildren().addAll(week, month);
         tableVBox.getChildren().add(radioButtons);
+        */
         
         //All Customers TableView Table
-        TableView customers = new TableView();
+        TableView customersTable = new TableView();
+                customersTable.prefWidthProperty().bind(scene.widthProperty());
+
+        ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
+        try {
+            //Connect to the database
+            conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            
+            //Query the database
+            String query = "SELECT * FROM customers";
+            ResultSet rs = conn.createStatement().executeQuery(query);
+            
+            //Populate the table with columns
+            for (int i = 0; i<rs.getMetaData().getColumnCount(); i++) {
+                final int finI = i;
+                //Create a new column
+                TableColumn col = new TableColumn<>();
+                col.setText(customerTableColumnName(rs.getMetaData().getColumnName(i+1)));
+                
+                
+                
+                //Add column to the table
+                customersTable.getColumns().add(col);
+                System.out.println("Column ["+i+"] ");
+            }
+            
+            //Populate the customers data into the data ObservableList
+            while(rs.next()) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    row.add(rs.getString(i));
+                }
+                csrData.add(row);
+            }
+            
+            //Populate table with customer data
+            customersTable.setItems(csrData);   
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        
+        tableVBox.getChildren().add(customersTable);
+        
+        
         
         
         
@@ -210,14 +289,7 @@ public class AppointmentMaker extends Application {
         //Add the tableview VBox to the main VBox
         mainVBox.getChildren().add(tableVBox);
         
-        //Add all items to the root
-        Pane root = new Pane();
-        root.getChildren().add(mainVBox);
-        mainVBox.getStyleClass().add("mainPage");
         
-        //Create Scene
-        Scene scene = new Scene(root, 700, 400);
-        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
         primaryStage.setTitle("Login");
         primaryStage.setScene(scene);
         primaryStage.show();
