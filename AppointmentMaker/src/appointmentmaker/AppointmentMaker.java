@@ -9,7 +9,7 @@ import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import static java.lang.System.*;
@@ -24,13 +24,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
@@ -65,6 +59,39 @@ public class AppointmentMaker extends Application {
             case "Division_ID" -> "Division ID";
             default -> "oops";
         };
+    }
+    public String formatAddress(String address) {
+        try {
+            //Connect to the database
+            conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            
+            //Find the country name
+            String query = "SELECT Country FROM countries WHERE Country_ID = "
+                    + "(SELECT Country_ID FROM first_level_divisions WHERE Division_ID = "
+                    + "(SELECT Division_ID from customers WHERE Address = ?))";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, address);
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            
+            //Find the first level division
+            String query2 = "SELECT Division FROM first_level_divisions WHERE Division_ID = "
+                    + "(SELECT Division_ID from customers WHERE Address = ?)";
+            PreparedStatement stmt2 = conn.prepareStatement(query2);
+            stmt2.setString(1, address);
+            ResultSet rs2 = stmt2.executeQuery();
+            rs2.next();
+            
+            //return country name
+            if (rs.getString("Country").equals("Canada")) {
+                return "Canadian address: " + address + ", " + rs2.getString("Division");
+            }
+            return rs.getString("Country") + " address: " + address + ", " + rs2.getString("Division");
+            
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
     }
     
     /**
@@ -253,21 +280,35 @@ public class AppointmentMaker extends Application {
                 final int finI = i;
                 //Create a new column
                 TableColumn col = new TableColumn<>();
-                col.setText(customerTableColumnName(rs.getMetaData().getColumnName(i+1)));
+                col.setText(customerTableColumnName(rs.getMetaData().getColumnName(i+1)));    
                 
+                //Set Column formatting
+                col.setCellValueFactory(new Callback<CellDataFeatures<ObservableList,String>,ObservableValue<String>>(){                    
+                    @Override
+                    public ObservableValue<String> call(CellDataFeatures<ObservableList, String> param) {                                                                                              
+                        return new SimpleStringProperty(param.getValue().get(finI).toString());                        
+                    }                    
+                });
                 
                 
                 //Add column to the table
                 customersTable.getColumns().add(col);
-                System.out.println("Column ["+i+"] ");
             }
             
             //Populate the customers data into the data ObservableList
             while(rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    row.add(rs.getString(i));
+                    //Add the data to a row
+                    if (rs.getMetaData().getColumnName(i).equals("Address")) {
+                        row.add(formatAddress(rs.getString(i)));
+                        
+                    } else {
+                        row.add(rs.getString(i));
+
+                    }
                 }
+                //Add the full row to the observableList
                 csrData.add(row);
             }
             
