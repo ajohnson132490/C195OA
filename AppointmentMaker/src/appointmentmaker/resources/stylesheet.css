@@ -22,6 +22,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 /*Main customer and appointment Pages*/
 .mainPage {
-    -fx-padding: 15;
+    -fx-padding: 15 15 0 15;
     -fx-alignment: TOP_CENTER;
+    -fx-pref-width: 1200;
 }

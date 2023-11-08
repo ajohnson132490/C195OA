@@ -45,19 +45,47 @@ public class AppointmentMaker extends Application {
     private ResourceBundle lang;
     
     //Helper Functions
+    /**
+     * This function formats all columns for the customer table 
+     * into a more user friendly format without all of the underscores.
+     * Any single word attributes are just passed along directly.
+     * 
+     * @param attribute
+     * @return the formatted column name
+     */
     public String customerTableColumnName(String attribute) {
         return switch (attribute) {
             case "Customer_ID" -> "ID";
             case "Customer_Name" -> "Name";
-            case "Address" -> "Address";
             case "Postal_Code" -> "Zip Code";
-            case "Phone" -> "Phone";
             case "Create_Date" -> "Create Date";
             case "Created_By" -> "Created By";
             case "Last_Update" -> "Last Updated";
             case "Last_Updated_By" -> "Last Updated By";
             case "Division_ID" -> "Division ID";
-            default -> "oops";
+            default -> attribute;
+        };
+    }
+    
+    /**
+     * This function formats all columns for the appointment table 
+     * into a more user friendly format without all of the underscores.
+     * Any single word attributes are just passed along directly.
+     * 
+     * @param attribute
+     * @return the formatted column name
+     */
+    public String appointmentTableColumnName(String attribute) {
+        return switch (attribute) {
+            case "Appointment_ID" -> "ID";
+            case "Create_Date" -> "Create Date";
+            case "Created_By" -> "Created By";
+            case "Last_Update" -> "Last Update";
+            case "Last_Updated" -> "Last Updated";
+            case "Customer_ID" -> "Customer ID";
+            case "User_ID" -> "User ID";
+            case "Contact_ID" -> "Contact";
+            default -> attribute;
         };
     }
     public String formatAddress(String address) {
@@ -249,19 +277,6 @@ public class AppointmentMaker extends Application {
         //Creating tableview VBox
         VBox tableVBox = new VBox(5);
         
-        /*
-        //Week or Month Radio Buttons
-        HBox radioButtons = new HBox(20);
-        ToggleGroup weekOrMonth = new ToggleGroup();
-        RadioButton week = new RadioButton("Week");
-        week.setToggleGroup(weekOrMonth);
-        week.setSelected(true);
-        RadioButton month = new RadioButton("Month");
-        month.setToggleGroup(weekOrMonth);
-        radioButtons.getChildren().addAll(week, month);
-        tableVBox.getChildren().add(radioButtons);
-        */
-        
         //All Customers TableView Table
         TableView customersTable = new TableView();
                 customersTable.setPrefWidth(1150);
@@ -353,7 +368,7 @@ public class AppointmentMaker extends Application {
         HBox lower = new HBox();
         Button viewAppointmentsBtn = new Button("View Appointments");
         EventHandler<ActionEvent> viewAppointmentsEvent = (ActionEvent e) -> {
-            //viewAppointments(primaryStage);
+            viewAppointments(primaryStage);
         };
         viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
         viewAppointmentsBtn.setPrefWidth(600);
@@ -361,7 +376,7 @@ public class AppointmentMaker extends Application {
         
         Button viewCustomersBtn = new Button("View Customers");
         EventHandler<ActionEvent> viewCustomersEvent = (ActionEvent e) -> {
-            //viewAppointments(primaryStage);
+            viewCustomers(primaryStage);
         };
         viewCustomersBtn.setOnAction(viewCustomersEvent);
         viewCustomersBtn.setPrefWidth(600);
@@ -372,7 +387,158 @@ public class AppointmentMaker extends Application {
         mainVBox.getChildren().add(lower);
         
         
-        primaryStage.setTitle("Login");
+        primaryStage.setTitle("View Customers");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+    
+    public void viewAppointments(Stage primaryStage) {
+        //Create the main VBox
+        VBox mainVBox = new VBox(15);
+        //Add all items to the root
+        Pane root = new Pane();
+        root.getChildren().add(mainVBox);
+        mainVBox.getStyleClass().add("mainPage");
+        
+        //Create Scene
+        Scene scene = new Scene(root, 1200, 600);
+        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+        
+        //Create title HBox
+        HBox upper = new HBox();
+        upper.setAlignment(Pos.TOP_LEFT);
+        Label title = new Label("View Appointments");
+        title.setStyle("-fx-font: 24 ariel;");
+        upper.getChildren().add(title);
+        mainVBox.getChildren().add(upper);
+        
+        //Creating tableview VBox
+        VBox tableVBox = new VBox(5);
+        
+        
+        //Week or Month Radio Buttons
+        HBox radioButtons = new HBox(20);
+        ToggleGroup weekOrMonth = new ToggleGroup();
+        RadioButton week = new RadioButton("Week");
+        week.setToggleGroup(weekOrMonth);
+        week.setSelected(true);
+        RadioButton month = new RadioButton("Month");
+        month.setToggleGroup(weekOrMonth);
+        radioButtons.getChildren().addAll(week, month);
+        tableVBox.getChildren().add(radioButtons);
+        
+        
+        //All Customers TableView Table
+        TableView customersTable = new TableView();
+                customersTable.setPrefWidth(1150);
+
+        ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
+        try {
+            //Connect to the database
+            conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            
+            //Query the database
+            String query = "SELECT * FROM appointments";
+            ResultSet rs = conn.createStatement().executeQuery(query);
+            
+            //Populate the table with columns
+            for (int i = 0; i<rs.getMetaData().getColumnCount(); i++) {
+                final int finI = i;
+                //Create a new column
+                TableColumn col = new TableColumn<>();
+                col.setText(appointmentTableColumnName(rs.getMetaData().getColumnName(i+1)));    
+                
+                //Set Column formatting
+                col.setCellValueFactory(new Callback<CellDataFeatures<ObservableList,String>,ObservableValue<String>>(){                    
+                    @Override
+                    public ObservableValue<String> call(CellDataFeatures<ObservableList, String> param) {                                                                                              
+                        return new SimpleStringProperty(param.getValue().get(finI).toString());                        
+                    }                    
+                });
+                
+                //Add column to the table
+                customersTable.getColumns().add(col);
+            }
+            
+            //Populate the customers data into the data ObservableList
+            while(rs.next()) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    //Add the data to a row
+                    if (rs.getMetaData().getColumnName(i).equals("Address")) {
+                        //row.add(formatAddress(rs.getString(i)));
+                        
+                    } else {
+                        row.add(rs.getString(i));
+
+                    }
+                }
+                //Add the full row to the observableList
+                csrData.add(row);
+            }
+            
+            //Populate table with customer data
+            customersTable.setItems(csrData);   
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        
+        tableVBox.getChildren().add(customersTable);
+        
+        //Buttons HBox
+        HBox buttons = new HBox(15);
+        buttons.setPadding(new Insets(0, 0, 0, 995));
+        
+        //Create the buttons
+        Button addBtn = new Button("Add");
+        EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+            //todo: create add form
+        };
+        addBtn.setOnAction(addEvent);
+        
+        Button updateBtn = new Button("Update");
+        EventHandler<ActionEvent> updateEvent = (ActionEvent e) -> {
+            //todo: create update form
+        };
+        updateBtn.setOnAction(updateEvent);
+        
+        Button deleteBtn = new Button("Delete");
+        EventHandler<ActionEvent> deleteEvent = (ActionEvent e) -> {
+            //todo: figure out how to delete items and refresh the tableview
+        };
+        deleteBtn.setOnAction(deleteEvent);
+        
+        //Add the buttons to the table VBox
+        buttons.getChildren().addAll(addBtn, updateBtn, deleteBtn);
+        tableVBox.getChildren().add(buttons);
+
+        //Add the tableview VBox to the main VBox
+        mainVBox.getChildren().add(tableVBox);
+        
+        //Lower page controls
+        HBox lower = new HBox();
+        Button viewAppointmentsBtn = new Button("View Appointments");
+        EventHandler<ActionEvent> viewAppointmentsEvent = (ActionEvent e) -> {
+            viewAppointments(primaryStage);
+        };
+        viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
+        viewAppointmentsBtn.setPrefWidth(600);
+        viewAppointmentsBtn.setPrefHeight(75);
+        
+        Button viewCustomersBtn = new Button("View Customers");
+        EventHandler<ActionEvent> viewCustomersEvent = (ActionEvent e) -> {
+            viewCustomers(primaryStage);
+        };
+        viewCustomersBtn.setOnAction(viewCustomersEvent);
+        viewCustomersBtn.setPrefWidth(600);
+        viewCustomersBtn.setPrefHeight(75);
+        
+        //Add buttons to lower HBox
+        lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn);
+        mainVBox.getChildren().add(lower);
+        
+        
+        primaryStage.setTitle("View Appointments");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
