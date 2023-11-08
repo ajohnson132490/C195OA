@@ -235,7 +235,7 @@ public class AppointmentMaker extends Application {
         mainVBox.getStyleClass().add("mainPage");
         
         //Create Scene
-        Scene scene = new Scene(root, 1200, 400);
+        Scene scene = new Scene(root, 1200, 600);
         scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
         
         //Create title HBox
@@ -264,7 +264,7 @@ public class AppointmentMaker extends Application {
         
         //All Customers TableView Table
         TableView customersTable = new TableView();
-                customersTable.prefWidthProperty().bind(scene.widthProperty());
+                customersTable.setPrefWidth(1150);
 
         ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
         try {
@@ -289,7 +289,6 @@ public class AppointmentMaker extends Application {
                         return new SimpleStringProperty(param.getValue().get(finI).toString());                        
                     }                    
                 });
-                
                 
                 //Add column to the table
                 customersTable.getColumns().add(col);
@@ -320,15 +319,57 @@ public class AppointmentMaker extends Application {
         
         tableVBox.getChildren().add(customersTable);
         
+        //Buttons HBox
+        HBox buttons = new HBox(15);
+        buttons.setPadding(new Insets(0, 0, 0, 995));
         
+        //Create the buttons
+        Button addBtn = new Button("Add");
+        EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+            //todo: create add form
+        };
+        addBtn.setOnAction(addEvent);
         
+        Button updateBtn = new Button("Update");
+        EventHandler<ActionEvent> updateEvent = (ActionEvent e) -> {
+            //todo: create update form
+        };
+        updateBtn.setOnAction(updateEvent);
         
+        Button deleteBtn = new Button("Delete");
+        EventHandler<ActionEvent> deleteEvent = (ActionEvent e) -> {
+            //todo: figure out how to delete items and refresh the tableview
+        };
+        deleteBtn.setOnAction(deleteEvent);
         
-        
-        
-        
+        //Add the buttons to the table VBox
+        buttons.getChildren().addAll(addBtn, updateBtn, deleteBtn);
+        tableVBox.getChildren().add(buttons);
+
         //Add the tableview VBox to the main VBox
         mainVBox.getChildren().add(tableVBox);
+        
+        //Lower page controls
+        HBox lower = new HBox();
+        Button viewAppointmentsBtn = new Button("View Appointments");
+        EventHandler<ActionEvent> viewAppointmentsEvent = (ActionEvent e) -> {
+            //viewAppointments(primaryStage);
+        };
+        viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
+        viewAppointmentsBtn.setPrefWidth(600);
+        viewAppointmentsBtn.setPrefHeight(75);
+        
+        Button viewCustomersBtn = new Button("View Customers");
+        EventHandler<ActionEvent> viewCustomersEvent = (ActionEvent e) -> {
+            //viewAppointments(primaryStage);
+        };
+        viewCustomersBtn.setOnAction(viewCustomersEvent);
+        viewCustomersBtn.setPrefWidth(600);
+        viewCustomersBtn.setPrefHeight(75);
+        
+        //Add buttons to lower HBox
+        lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn);
+        mainVBox.getChildren().add(lower);
         
         
         primaryStage.setTitle("Login");
