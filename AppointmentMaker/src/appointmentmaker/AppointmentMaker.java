@@ -14,9 +14,18 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import static java.lang.System.*;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.TimeZone;
+import java.util.logging.Level;
 import static javafx.application.Application.launch;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
@@ -88,6 +97,12 @@ public class AppointmentMaker extends Application {
             default -> attribute;
         };
     }
+    
+    /**
+     *
+     * @param address
+     * @return
+     */
     public String formatAddress(String address) {
         try {
             //Connect to the database
@@ -120,6 +135,87 @@ public class AppointmentMaker extends Application {
             System.out.println(e);
             return null;
         }
+    }
+    
+    /**
+     *
+     * @param utc
+     * @return
+     */
+    public String convertTimeToLocal(String utc) {
+        //Get my utc time into a DateFormat
+        DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        java.util.Date date = null;
+        try {
+            date = utcFormat.parse(utc);
+        } catch (ParseException ex) {
+            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        DateFormat localFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        localFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
+        
+        return localFormat.format(date);
+    }
+    
+    /**
+     * This function finds all appointments within a given range, and returns 
+     * all of those appointments in a list.
+     * <p>
+     * When r is 0, the range is 7 days. When r is 1, the range is 31 days.
+     * 
+     * @param r the range of dates
+     * @param rs the result set of the database query of all appointments
+     * @return an ObservableList of all the appointments within the specified range
+     */
+    public ObservableList<ObservableList> getAppointments(int r, ResultSet rs) {
+        ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
+        try {
+            //Populate the customers data into the data ObservableList
+            while(rs.next()) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                
+                //Get current datetime and the appointment datetime
+                DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime now = LocalDateTime.now(); 
+                java.util.Date current = Date.from(now.atZone(TimeZone.getTimeZone("UTC").toZoneId()).toInstant());
+                java.util.Date appointmentStart = format.parse(rs.getString(6));
+                
+                //Check the difference
+                long difference = ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24)% 365);
+                //System.out.println("Difference (Years): " + ((current.getTime() - appointmentStart.getTime()) / (1000l * 60 * 60 * 24 * 365)));
+                //System.out.println("Difference (Days): " + ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24)% 365));
+                
+                
+                /*DELETE COMMENTS BEFORE IF STATEMENT ONCE NEW APPOINTMENTS CAN BE CREATED*/
+                
+                
+                //if (r == 0 && difference <= 7 || r ==1 && difference <= 31) {
+                    System.out.println("There shouldn't be any appointments here...");
+                    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                        //Add the data to a row
+                        if (rs.getMetaData().getColumnName(i).equals("Start") || 
+                                rs.getMetaData().getColumnName(i).equals("End") ||
+                                rs.getMetaData().getColumnName(i).equals("Last_Update")) {
+                            row.add(convertTimeToLocal(rs.getString(i)));
+                        } else {
+                            row.add(rs.getString(i));
+                        }
+                    }
+                
+                
+                    //Add the full row to the observableList
+                    csrData.add(row);
+                //} else if (r != 0 && r != 1) {
+                //    throw new IllegalArgumentException("r must be 1 or 0");
+                //}
+            }
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return csrData;
     }
     
     /**
@@ -263,7 +359,7 @@ public class AppointmentMaker extends Application {
         mainVBox.getStyleClass().add("mainPage");
         
         //Create Scene
-        Scene scene = new Scene(root, 1200, 600);
+        Scene scene = new Scene(root, 1250, 600);
         scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
         
         //Create title HBox
@@ -279,7 +375,7 @@ public class AppointmentMaker extends Application {
         
         //All Customers TableView Table
         TableView customersTable = new TableView();
-                customersTable.setPrefWidth(1150);
+                customersTable.setPrefWidth(1200);
 
         ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
         try {
@@ -371,7 +467,7 @@ public class AppointmentMaker extends Application {
             viewAppointments(primaryStage);
         };
         viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
-        viewAppointmentsBtn.setPrefWidth(600);
+        viewAppointmentsBtn.setPrefWidth(625);
         viewAppointmentsBtn.setPrefHeight(75);
         
         Button viewCustomersBtn = new Button("View Customers");
@@ -379,7 +475,7 @@ public class AppointmentMaker extends Application {
             viewCustomers(primaryStage);
         };
         viewCustomersBtn.setOnAction(viewCustomersEvent);
-        viewCustomersBtn.setPrefWidth(600);
+        viewCustomersBtn.setPrefWidth(625);
         viewCustomersBtn.setPrefHeight(75);
         
         //Add buttons to lower HBox
@@ -401,7 +497,7 @@ public class AppointmentMaker extends Application {
         mainVBox.getStyleClass().add("mainPage");
         
         //Create Scene
-        Scene scene = new Scene(root, 1200, 600);
+        Scene scene = new Scene(root, 1250, 625);
         scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
         
         //Create title HBox
@@ -430,7 +526,7 @@ public class AppointmentMaker extends Application {
         
         //All Customers TableView Table
         TableView customersTable = new TableView();
-                customersTable.setPrefWidth(1150);
+                customersTable.setPrefWidth(1200);
 
         ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
         try {
@@ -460,26 +556,12 @@ public class AppointmentMaker extends Application {
                 customersTable.getColumns().add(col);
             }
             
-            //Populate the customers data into the data ObservableList
-            while(rs.next()) {
-                ObservableList<String> row = FXCollections.observableArrayList();
-                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    //Add the data to a row
-                    if (rs.getMetaData().getColumnName(i).equals("Address")) {
-                        //row.add(formatAddress(rs.getString(i)));
-                        
-                    } else {
-                        row.add(rs.getString(i));
-
-                    }
-                }
-                //Add the full row to the observableList
-                csrData.add(row);
-            }
+            //TODO READ BASED ON RADIO BUTTONS
+            csrData = getAppointments(0, rs);
             
             //Populate table with customer data
             customersTable.setItems(csrData);   
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.out.println(e);
         }
         
@@ -522,7 +604,7 @@ public class AppointmentMaker extends Application {
             viewAppointments(primaryStage);
         };
         viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
-        viewAppointmentsBtn.setPrefWidth(600);
+        viewAppointmentsBtn.setPrefWidth(625);
         viewAppointmentsBtn.setPrefHeight(75);
         
         Button viewCustomersBtn = new Button("View Customers");
@@ -530,7 +612,7 @@ public class AppointmentMaker extends Application {
             viewCustomers(primaryStage);
         };
         viewCustomersBtn.setOnAction(viewCustomersEvent);
-        viewCustomersBtn.setPrefWidth(600);
+        viewCustomersBtn.setPrefWidth(625);
         viewCustomersBtn.setPrefHeight(75);
         
         //Add buttons to lower HBox
