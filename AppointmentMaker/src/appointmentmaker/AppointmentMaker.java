@@ -12,15 +12,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import static java.lang.System.*;
-import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -34,9 +30,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.TableColumn.CellDataFeatures;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
 
@@ -276,7 +270,7 @@ public class AppointmentMaker extends Application {
                     //Check if the password entered matches the username
                     if (rs.next() && rs.getString("Password").equals(pField.getText())) {
                         System.out.println("Login Success");
-                        viewCustomers(primaryStage);
+                        viewAppointments(primaryStage);
                     } else {
                         System.out.println("Username or password is incorrect");
                     }
@@ -303,7 +297,7 @@ public class AppointmentMaker extends Application {
                             //Check if the password entered matches the username
                             if (rs.next() && rs.getString("Password").equals(pField.getText())) {
                                 System.out.println("Login Success");
-                                viewCustomers(primaryStage);
+                                viewAppointments(primaryStage);
                             } else {
                                 System.out.println("Username or password is incorrect");
                             }
@@ -619,10 +613,45 @@ public class AppointmentMaker extends Application {
         lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn);
         mainVBox.getChildren().add(lower);
         
-        
         primaryStage.setTitle("View Appointments");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
     
+    public void addAppointments(Stage primaryStage) {
+        //Create the main vbox 
+        VBox mainVBox = new VBox(15);
+        
+        //Add all items to the root
+        Pane root = new Pane();
+        root.getChildren().add(mainVBox);
+        mainVBox.getStyleClass().add("mainPage");
+        
+        //Create Scene
+        Scene scene = new Scene(root, 1250, 625);
+        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+        
+        //Creating all Labels 
+        Label id = new Label("ID");
+        Label title = new Label("Title");
+        Label desc = new Label("Description");
+        Label loc = new Label("Location");
+        Label contact = new Label("Contact");
+        Label type = new Label("Type");
+        Label sDate = new Label("Start Date");
+        Label sTime = new Label("Start Time");
+        Label eDate = new Label("End Date");
+        Label eTime = new Label("End Time");
+        Label csr = new Label("Customer");
+        Label user = new Label("User");
+        
+        //Creating all fields
+        TextField idField = new TextField(/*getNextApptId()*/);
+        idField.setDisable(true);
+        
+        
+        primaryStage.setTitle("View Appointments");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
 }
