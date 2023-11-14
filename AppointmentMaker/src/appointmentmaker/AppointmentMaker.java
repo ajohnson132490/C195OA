@@ -153,6 +153,23 @@ public class AppointmentMaker extends Application {
         return localFormat.format(date);
     }
     
+    public String convertTimeToET(String utc) {
+        //Get my utc time into a DateFormat
+        DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        java.util.Date date = null;
+        try {
+            date = utcFormat.parse(utc);
+        } catch (ParseException ex) {
+            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        DateFormat estFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        estFormat.setTimeZone(TimeZone.getTimeZone("EST"));
+        
+        return estFormat.format(date);
+    }
+    
     /**
      * This function finds all appointments within a given range, and returns 
      * all of those appointments in a list.
@@ -212,8 +229,85 @@ public class AppointmentMaker extends Application {
         return csrData;
     }
     
+    public ObservableList<ObservableList> getAppointments(int userID) {
+        ObservableList<ObservableList> userAppointments = FXCollections.observableArrayList();
+        try {
+            //Query the database
+            String query = "SELECT Start, End FROM appointments WHERE User_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, Integer.toString(userID));
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                
+                //Get current datetime and the appointment datetime
+                DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                java.util.Date appointmentStart = format.parse(rs.getString(6));
+                
+                //Add the data to the row
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                        //Add the data to a row
+                        if (rs.getMetaData().getColumnName(i).equals("Start") || 
+                                rs.getMetaData().getColumnName(i).equals("End") ||
+                                rs.getMetaData().getColumnName(i).equals("Last_Update")) {
+                            row.add(convertTimeToET(rs.getString(i)));
+                        } else {
+                            row.add(rs.getString(i));
+                        }
+                }
+                
+                //Add the row to the data
+                userAppointments.add(row);
+            }
+         } catch (Exception e) {
+             System.out.println(e);
+         }
+        
+        return userAppointments;
+    }
+    
+    public int getNextApptId() {
+         try {
+            //Query the database
+            String query = "SELECT MAX(Appointment_ID) FROM appointments";
+            ResultSet rs = conn.createStatement().executeQuery(query);
+            rs.next();
+            
+            return rs.getInt(1) + 1;
+            
+         } catch (Exception e) {
+             System.out.println(e);
+         }
+         
+         return -1;
+    }
+    
     public ObservableList<String> getAllContacts() {
-        return null;
+        ObservableList<String> contacts = FXCollections.observableArrayList();
+        try {
+            //Query the database
+            String query = "SELECT Contact_Name FROM Contacts";
+            ResultSet rs = conn.createStatement().executeQuery(query);
+            while (rs.next()) {
+                contacts.add(rs.getString(1));
+            }
+            return contacts;
+            
+         } catch (Exception e) {
+             System.out.println(e);
+         }
+         
+         return null;
+    }
+    
+    public boolean validateAppointment(String apptID, String title, String desc, String loc,
+            String contact, String type, DatePicker sDate, String sTHour, String sTMinute,
+            String sTMeridiem, String eTHour, String eTMinute, String eTMeridiem,
+            String csr, String user) {
+        //If the date is the same, then check time overlaps per user
+        
+        return false;
     }
     
     /**
@@ -632,7 +726,7 @@ public class AppointmentMaker extends Application {
         mainVBox.getStyleClass().add("mainPage");
         
         //Create Scene
-        Scene scene = new Scene(root, 550, 600);
+        Scene scene = new Scene(root, 525, 610);
         scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
         
         //Create title HBox
@@ -674,7 +768,7 @@ public class AppointmentMaker extends Application {
         Label user = new Label("User ID");
         
         //Creating all fields
-        TextField idField = new TextField(/*getNextApptId()*/);
+        TextField idField = new TextField(Integer.toString(getNextApptId()));
         idField.setDisable(true);
         TextField titleField = new TextField();
         titleField.setPromptText("Appointment title");
@@ -683,18 +777,25 @@ public class AppointmentMaker extends Application {
         TextField locField = new TextField();
         locField.setPromptText("Where is the appointment");
         ComboBox contactField = new ComboBox(getAllContacts());
+        contactField.setPromptText("Contact");
         TextField typeField = new TextField();
         typeField.setPromptText("What type of appointment");
         
         DatePicker sDateField = new DatePicker();
         ComboBox sTHour = new ComboBox(FXCollections.observableArrayList(hours));
+        sTHour.setPromptText("hh");
         ComboBox sTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
+        sTMinute.setPromptText("mm");
         ComboBox sTMeridiem = new ComboBox(FXCollections.observableArrayList(meridiem));
+        sTMeridiem.setPromptText("am/pm");
         
         DatePicker eDateField = new DatePicker();
         ComboBox eTHour = new ComboBox(FXCollections.observableArrayList(hours));
+        eTHour.setPromptText("hh");
         ComboBox eTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
+        eTMinute.setPromptText("mm");
         ComboBox eTMeridiem = new ComboBox(FXCollections.observableArrayList(meridiem));
+        eTMeridiem.setPromptText("am/pm");
         
         TextField csrField = new TextField();
         csrField.setPromptText("Who is the customer");
@@ -703,6 +804,10 @@ public class AppointmentMaker extends Application {
         
         //Create the buttons
         Button add = new Button("Add");
+        EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+            System.out.println(sDateField.getValue());
+        };
+        add.setOnAction(addEvent);
         Button cancel = new Button("Cancel");
         
         //Add it all to the form
@@ -739,16 +844,12 @@ public class AppointmentMaker extends Application {
         form.add(userField, 3, 1);
         
         HBox buttons = new HBox(10);
-        buttons.setPadding(new Insets(0, 50, 0, 0));
+        buttons.setPadding(new Insets(0, 0, 0, 50));
         buttons.getChildren().addAll(add, cancel);
-        form.add(buttons, 4, 10);
+        form.add(buttons, 3, 10);
         
         //Add the form to the mainVBox
         mainVBox.getChildren().add(form);
-
-
-        
-        
         
         primaryStage.setTitle("View Appointments");
         primaryStage.setScene(scene);

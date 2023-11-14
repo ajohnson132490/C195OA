@@ -2,12 +2,10 @@
 TO DO LIST
 
 Appointments
-•  create getAppointmentID function
-•  add functionality to the get contact function
 •  make the modify appointment page
 •  make delete page button work
 •  verify that month/week radio buttons work as intended
-•  make input verification functions
+•  finish input verification function
 
 Customers
 •  create add customer page
