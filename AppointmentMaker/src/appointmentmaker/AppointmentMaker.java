@@ -212,6 +212,10 @@ public class AppointmentMaker extends Application {
         return csrData;
     }
     
+    public ObservableList<String> getAllContacts() {
+        return null;
+    }
+    
     /**
      * The start function is the initial landing screen of the application
      * where the user will be able to log in and see their current location.
@@ -568,7 +572,7 @@ public class AppointmentMaker extends Application {
         //Create the buttons
         Button addBtn = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
-            //todo: create add form
+            addAppointments(primaryStage);
         };
         addBtn.setOnAction(addEvent);
         
@@ -620,7 +624,7 @@ public class AppointmentMaker extends Application {
     
     public void addAppointments(Stage primaryStage) {
         //Create the main vbox 
-        VBox mainVBox = new VBox(15);
+        VBox mainVBox = new VBox(20);
         
         //Add all items to the root
         Pane root = new Pane();
@@ -628,8 +632,32 @@ public class AppointmentMaker extends Application {
         mainVBox.getStyleClass().add("mainPage");
         
         //Create Scene
-        Scene scene = new Scene(root, 1250, 625);
+        Scene scene = new Scene(root, 550, 600);
         scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+        
+        //Create title HBox
+        HBox upper = new HBox();
+        upper.setAlignment(Pos.TOP_LEFT);
+        Label mTitle = new Label("Create an Appointment");
+        mTitle.setStyle("-fx-font: 24 ariel;");
+        upper.getChildren().add(mTitle);
+        mainVBox.getChildren().add(upper);
+        
+        //Creating tableview VBox
+        GridPane form = new GridPane();
+        form.setVgap(25);
+        form.setHgap(5);
+        
+        //Creating some string arrays for the combo boxes
+        String hours[] = {"12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"};
+        String minutes[] = {"00", "01", "02", "03", "04", "05", "06", "07", "08",
+            "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+            "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
+            "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41",
+            "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52",
+            "53", "54", "55", "56", "57", "58", "59", "60"};
+        String meridiem[] = {"AM", "PM"};
+        
         
         //Creating all Labels 
         Label id = new Label("ID");
@@ -642,12 +670,84 @@ public class AppointmentMaker extends Application {
         Label sTime = new Label("Start Time");
         Label eDate = new Label("End Date");
         Label eTime = new Label("End Time");
-        Label csr = new Label("Customer");
-        Label user = new Label("User");
+        Label csr = new Label("Customer ID");
+        Label user = new Label("User ID");
         
         //Creating all fields
         TextField idField = new TextField(/*getNextApptId()*/);
         idField.setDisable(true);
+        TextField titleField = new TextField();
+        titleField.setPromptText("Appointment title");
+        TextField descField = new TextField();
+        descField.setPromptText("A brief description");
+        TextField locField = new TextField();
+        locField.setPromptText("Where is the appointment");
+        ComboBox contactField = new ComboBox(getAllContacts());
+        TextField typeField = new TextField();
+        typeField.setPromptText("What type of appointment");
+        
+        DatePicker sDateField = new DatePicker();
+        ComboBox sTHour = new ComboBox(FXCollections.observableArrayList(hours));
+        ComboBox sTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
+        ComboBox sTMeridiem = new ComboBox(FXCollections.observableArrayList(meridiem));
+        
+        DatePicker eDateField = new DatePicker();
+        ComboBox eTHour = new ComboBox(FXCollections.observableArrayList(hours));
+        ComboBox eTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
+        ComboBox eTMeridiem = new ComboBox(FXCollections.observableArrayList(meridiem));
+        
+        TextField csrField = new TextField();
+        csrField.setPromptText("Who is the customer");
+        TextField userField = new TextField();
+        userField.setPromptText("Who is the user");
+        
+        //Create the buttons
+        Button add = new Button("Add");
+        Button cancel = new Button("Cancel");
+        
+        //Add it all to the form
+        form.add(id, 0, 0);
+        form.add(idField, 1, 0);
+        form.add(title, 0, 1);
+        form.add(titleField, 1, 1);
+        form.add(desc, 0, 2);
+        form.add(descField, 1, 2);
+        form.add(loc, 0, 3);
+        form.add(locField, 1, 3);
+        form.add(contact, 0, 4);
+        form.add(contactField, 1, 4);
+        form.add(type, 0, 5);
+        form.add(typeField, 1, 5);
+        
+        form.add(sDate, 0, 6);
+        form.add(sDateField, 1, 6);
+        form.add(sTime, 0, 7);
+        HBox sTimeField = new HBox();
+        sTimeField.getChildren().addAll(sTHour, sTMinute, sTMeridiem);
+        form.add(sTimeField, 1, 7);
+        
+        form.add(eDate, 0, 8);
+        form.add(eDateField, 1, 8);
+        form.add(eTime, 0, 9);
+        HBox eTimeField = new HBox();
+        eTimeField.getChildren().addAll(eTHour, eTMinute, eTMeridiem);
+        form.add(eTimeField, 1, 9);
+        
+        form.add(csr, 2, 0);
+        form.add(csrField, 3, 0);
+        form.add(user, 2, 1);
+        form.add(userField, 3, 1);
+        
+        HBox buttons = new HBox(10);
+        buttons.setPadding(new Insets(0, 50, 0, 0));
+        buttons.getChildren().addAll(add, cancel);
+        form.add(buttons, 4, 10);
+        
+        //Add the form to the mainVBox
+        mainVBox.getChildren().add(form);
+
+
+        
         
         
         primaryStage.setTitle("View Appointments");
