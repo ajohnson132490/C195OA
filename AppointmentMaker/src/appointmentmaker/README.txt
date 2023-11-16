@@ -6,6 +6,7 @@ Appointments
 •  make delete page button work
 •  verify that month/week radio buttons work as intended
 •  finish input verification function
+    - https://www.mssqltips.com/sqlservertip/5854/using-tsql-to-find-events-that-overlap-or-dont-in-sql-server/
 
 Customers
 •  create add customer page
