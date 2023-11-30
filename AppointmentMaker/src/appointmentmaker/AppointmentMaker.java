@@ -47,6 +47,7 @@ public class AppointmentMaker extends Application {
     private Locale locale;
     private ResourceBundle lang;
     private IntUtils h;
+    private String currentUser;
     
     
     
@@ -110,6 +111,7 @@ public class AppointmentMaker extends Application {
                     //Check if the password entered matches the username
                     if (rs.next() && rs.getString("Password").equals(pField.getText())) {
                         System.out.println("Login Success");
+                        currentUser = uField.getText();
                         viewAppointments(primaryStage);
                     } else {
                         System.out.println("Username or password is incorrect");
@@ -126,7 +128,8 @@ public class AppointmentMaker extends Application {
                     case ENTER:    
                         try {
                             //Connect to the database
-                            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                            conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                            h.setConnection(conn);
                             
                             //Query the database
                             String query = "SELECT Password FROM users WHERE User_Name = ?";
@@ -137,6 +140,7 @@ public class AppointmentMaker extends Application {
                             //Check if the password entered matches the username
                             if (rs.next() && rs.getString("Password").equals(pField.getText())) {
                                 System.out.println("Login Success");
+                                currentUser = uField.getText();
                                 viewAppointments(primaryStage);
                             } else {
                                 System.out.println("Username or password is incorrect");
@@ -539,7 +543,7 @@ public class AppointmentMaker extends Application {
         //Create the buttons
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
-            h.validateAppointment(idField.getText(), titleField.getText(),
+            h.validateAppointment(currentUser, idField.getText(), titleField.getText(),
                     descField.getText(), locField.getText(), contactField.getValue().toString(),
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
