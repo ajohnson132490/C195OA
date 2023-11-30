@@ -15,8 +15,11 @@ import javafx.stage.Stage;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -168,6 +171,23 @@ public class IntUtils {
         return estFormat.format(date);
     }
     
+    public String convertTimeToUTC(String est) {
+        //Get my utc time into a DateFormat
+        DateFormat estFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        estFormat.setTimeZone(TimeZone.getTimeZone("EST"));
+        java.util.Date date = null;
+        try {
+            date = estFormat.parse(est);
+        } catch (ParseException ex) {
+            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        
+        return utcFormat.format(date);
+    }
+    
     /**
      * This function finds all appointments within a given range, and returns 
      * all of those appointments in a list.
@@ -239,10 +259,6 @@ public class IntUtils {
             while (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 
-                //Get current datetime and the appointment datetime
-                DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                java.util.Date appointmentStart = format.parse(rs.getString(6));
-                
                 //Add the data to the row
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                         //Add the data to a row
@@ -258,7 +274,7 @@ public class IntUtils {
                 //Add the row to the data
                 userAppointments.add(row);
             }
-         } catch (Exception e) {
+         } catch (SQLException e) {
              System.out.println(e);
          }
         
@@ -299,7 +315,25 @@ public class IntUtils {
          return null;
     }
     
-    public boolean validateAppointment(String apptID, String title, String desc,
+    public String getContact(String contact) {
+        try { 
+            //Query the database for the customer
+            String query = "SELECT Contact_ID FROM contacts WHERE Contact_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, contact);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                return rs.getString("Contact_ID");
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+        
+        return "";
+    }
+    
+    public void validateAppointment(String currentUser, String apptID, String title, String desc,
             String loc, String contact, String type, DatePicker sDate, String sTHour,
             String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
             String csr, String user) {
@@ -326,19 +360,99 @@ public class IntUtils {
                 throw new IllegalArgumentException("Selected CUSTOMER does not exist");
             }
             
-            //Make sure the appointment time is valid
+            //Create all variables to check date and time
+            LocalDate startDate = sDate.getValue();
+            LocalDate endDate = eDate.getValue();
+            Date startTime = null;
+            Date endTime = null;
+            
+            //Get my start and end time into date format for comparison
+            DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            try {
+                startTime = formatter.parse(convertTimeToUTC(startDate.toString() + " " + sTHour + ":" + sTMinute + ":00"));
+                endTime = formatter.parse(convertTimeToUTC(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00"));
+            } catch (ParseException ex) {
+                java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            //Check if appointment starts before it ends, and if its within office hours
             if (!duringOfficeHours(eTHour, eTMinute)) {
                 throw new IllegalArgumentException("Appointment must end by 22:00 ET");
             }
+            if (startDate.compareTo(endDate) > 0) {
+                throw new IllegalArgumentException("Start date must be before end date.");
+            } 
+
+            //Query the database for all customer appointments
+            query = "SELECT Start, End FROM appointments WHERE Customer_ID = ?";
+            stmt = conn.prepareStatement(query);
+            stmt.setString(1, csr);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                //Format and compare dates
+                Date tempStart = formatter.parse(rs.getString(1));
+                Date tempEnd = formatter.parse(rs.getString(2));
+                
+                int resultStart = startTime.compareTo(tempStart);
+                int resultEnd = endTime.compareTo(tempEnd);
+                
+                System.out.println("Start: " + startTime.toString());
+                System.out.println("tempStart: " + tempStart.toString());
+                System.out.println("End: " + endTime.toString());
+                System.out.println("tempEnd: " + tempEnd.toString());
+
+                //Throw an error if there's an appointment with an overlap
+                if (startTime.before(tempEnd) && endTime.after(tempStart)) {
+                    throw new IllegalArgumentException("This appointment overlaps with an existing appointment for this customer.");
+                }        
+            }
+            
+            addAppointment(currentUser, apptID, title, desc,
+            loc, contact, type, startTime.toString(), endTime.toString(),
+            csr, user);
             
         } catch (Exception e) {
             System.out.println(e);
         }
-        
-        return false;
     }
     
     public boolean duringOfficeHours(String eTHour, String eTMinute) {
         return !(eTHour.equals("22") && !eTMinute.equals("00"));
+    }
+    
+    
+    private void addAppointment(String currentUser, String apptID, String title, String desc,
+            String loc, String contact, String type, String start, String end,
+            String csr, String user) {
+        try {
+            //Create the query
+            String query = "INSERT INTO appointments "
+                        + "(Appointment_ID, Title, Description, Location, Type, Start, End,"
+                        + "Create_Date, Created_By, Last_Update, Last_Updated_By, Customer_ID,"
+                        + "User_ID, Contact_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement stmt = conn.prepareStatement(query);
+                
+                //Set all the variables
+                stmt.setString(1, apptID);
+                stmt.setString(2, title);
+                stmt.setString(3, desc);
+                stmt.setString(4, loc);
+                stmt.setString(5, type);
+                stmt.setString(6, start);
+                stmt.setString(7, end);
+                stmt.setString(8, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                stmt.setString(9, currentUser);
+                stmt.setString(10, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                stmt.setString(11, currentUser);
+                stmt.setString(12, csr);
+                stmt.setString(13, user);
+                stmt.setString(14, getContact(contact));
+                
+                //Execute
+                stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
     }
 }
