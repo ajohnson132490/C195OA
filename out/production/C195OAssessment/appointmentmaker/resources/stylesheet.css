@@ -1,0 +1,28 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Oct 23, 2023, 1:15:59 PM
+    Author     : LabUser
+*/
+
+/*Login Page*/
+.loginRoot {
+    -fx-padding: 20;
+    -fx-spacing: 50;
+    -fx-alignment: TOP_CENTER;
+    -fx-pref-width: 350;
+}
+
+.loginForm {
+    -fx-spacing: 5;
+    -fx-max-width: 200;
+}
+
+/*Main customer and appointment Pages*/
+.mainPage {
+    -fx-padding: 15 15 0 15;
+    -fx-alignment: TOP_CENTER;
+    -fx-pref-width: 1250;
+}

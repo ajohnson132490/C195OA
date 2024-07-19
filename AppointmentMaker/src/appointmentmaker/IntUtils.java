@@ -4,37 +4,23 @@
  */
 package appointmentmaker;
 
-import java.sql.*;
-import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.DatePicker;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.TimeZone;
 import java.util.logging.Level;
-import static javafx.application.Application.launch;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.TableColumn.CellDataFeatures;
-import javafx.scene.input.KeyEvent;
-import javafx.util.Callback;
 
 /**
  *
@@ -212,33 +198,26 @@ public class IntUtils {
                 java.util.Date appointmentStart = format.parse(rs.getString(6));
                 
                 //Check the difference
-                long difference = ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24)% 365);
-                //System.out.println("Difference (Years): " + ((current.getTime() - appointmentStart.getTime()) / (1000l * 60 * 60 * 24 * 365)));
-                //System.out.println("Difference (Days): " + ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24)% 365));
-                
-                
-                /*DELETE COMMENTS BEFORE IF STATEMENT ONCE NEW APPOINTMENTS CAN BE CREATED*/
-                
-                
-                //if (r == 0 && difference <= 7 || r ==1 && difference <= 31) {
-                    System.out.println("There shouldn't be any appointments here...");
-                    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                        //Add the data to a row
-                        if (rs.getMetaData().getColumnName(i).equals("Start") || 
-                                rs.getMetaData().getColumnName(i).equals("End") ||
-                                rs.getMetaData().getColumnName(i).equals("Last_Update")) {
-                            row.add(convertTimeToLocal(rs.getString(i)));
-                        } else {
-                            row.add(rs.getString(i));
+                if (current.getTime() <= appointmentStart.getTime()){
+                    long difference = ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24)% 365);
+
+                    if (r == 0 && difference >= -7 || r == 1 && difference >= -31) {
+                        for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                            //Add the data to a row
+                            if (rs.getMetaData().getColumnName(i).equals("Start") ||
+                                    rs.getMetaData().getColumnName(i).equals("End") ||
+                                    rs.getMetaData().getColumnName(i).equals("Last_Update")) {
+                                row.add(convertTimeToLocal(rs.getString(i)));
+                            } else {
+                                row.add(rs.getString(i));
+                            }
                         }
+                        //Add the full row to the observableList
+                        csrData.add(row);
                     }
-                
-                
-                    //Add the full row to the observableList
-                    csrData.add(row);
-                //} else if (r != 0 && r != 1) {
-                //    throw new IllegalArgumentException("r must be 1 or 0");
-                //}
+                } else if (r != 0 && r != 1) {
+                    throw new IllegalArgumentException("r must be 1 or 0");
+                }
             }
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
@@ -316,23 +295,23 @@ public class IntUtils {
     }
     
     public String getContact(String contact) {
-        try { 
+        try {
             //Query the database for the customer
-            String query = "SELECT Contact_ID FROM contacts WHERE Contact_ID = ?";
+            String query = "SELECT Contact_ID FROM contacts WHERE Contact_Name = ?";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, contact);
             ResultSet rs = stmt.executeQuery();
-            
-            while (rs.next()) {
-                return rs.getString("Contact_ID");
+
+            if (rs.next()) {
+                return String.valueOf(rs.getInt(1));
             }
         } catch (SQLException e) {
             System.out.println(e);
+            return "Error querying the database for the CONTACT";
         }
-        
-        return "";
+        return "Selected CONTACT does not exist";
     }
-    
+
     public void validateAppointment(String currentUser, String apptID, String title, String desc,
             String loc, String contact, String type, DatePicker sDate, String sTHour,
             String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
@@ -398,8 +377,8 @@ public class IntUtils {
                 int resultEnd = endTime.compareTo(tempEnd);
                 
                 System.out.println("Start: " + startTime.toString());
-                System.out.println("tempStart: " + tempStart.toString());
                 System.out.println("End: " + endTime.toString());
+                System.out.println("tempStart: " + tempStart.toString());
                 System.out.println("tempEnd: " + tempEnd.toString());
 
                 //Throw an error if there's an appointment with an overlap
@@ -407,10 +386,14 @@ public class IntUtils {
                     throw new IllegalArgumentException("This appointment overlaps with an existing appointment for this customer.");
                 }        
             }
-            
+
+            //Format the times correctly
+            String start = formatter.format(startTime);
+            String end = formatter.format(endTime);
+
+            //Add the appt
             addAppointment(currentUser, apptID, title, desc,
-            loc, contact, type, startTime.toString(), endTime.toString(),
-            csr, user);
+            loc, contact, type, start, end, csr, user);
             
         } catch (Exception e) {
             System.out.println(e);

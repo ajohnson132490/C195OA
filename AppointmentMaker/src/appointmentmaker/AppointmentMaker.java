@@ -4,34 +4,29 @@
  */
 package appointmentmaker;
 
-import java.sql.*;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.TimeZone;
-import java.util.logging.Level;
-import static javafx.application.Application.launch;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.TableColumn.CellDataFeatures;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.util.Callback;
+
+import java.sql.*;
+import java.time.ZoneId;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 
 
@@ -94,61 +89,55 @@ public class AppointmentMaker extends Application {
         Button loginBtn = new Button("Login");
         loginBtn.setPrefWidth(50);
         loginBtnPadding.getChildren().add(loginBtn);
-        loginBtn.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                try {
-                    //Connect to the database
-                    conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                    h.setConnection(conn);
-                    
-                    //Query the database
-                    String query = "SELECT Password FROM users WHERE User_Name = ?";
-                    PreparedStatement stmt = conn.prepareStatement(query);
-                    stmt.setString(1, uField.getText());
-                    ResultSet rs = stmt.executeQuery();
-                    
-                    //Check if the password entered matches the username
-                    if (rs.next() && rs.getString("Password").equals(pField.getText())) {
-                        System.out.println("Login Success");
-                        currentUser = uField.getText();
-                        viewAppointments(primaryStage);
-                    } else {
-                        System.out.println("Username or password is incorrect");
-                    }
-                } catch (Exception e) {
-                    System.out.println(e);
+        loginBtn.setOnAction(event -> {
+            try {
+                //Connect to the database
+                conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                h.setConnection(conn);
+
+                //Query the database
+                String query = "SELECT Password FROM users WHERE User_Name = ?";
+                PreparedStatement stmt = conn.prepareStatement(query);
+                stmt.setString(1, uField.getText());
+                ResultSet rs = stmt.executeQuery();
+
+                //Check if the password entered matches the username
+                if (rs.next() && rs.getString("Password").equals(pField.getText())) {
+                    System.out.println("Login Success");
+                    currentUser = uField.getText();
+                    viewAppointments(primaryStage);
+                } else {
+                    System.out.println("Username or password is incorrect");
                 }
+            } catch (Exception e) {
+                System.out.println(e);
             }
         });
-        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                switch (event.getCode()) {
-                    case ENTER:    
-                        try {
-                            //Connect to the database
-                            conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                            h.setConnection(conn);
-                            
-                            //Query the database
-                            String query = "SELECT Password FROM users WHERE User_Name = ?";
-                            PreparedStatement stmt = conn.prepareStatement(query);
-                            stmt.setString(1, uField.getText());
-                            ResultSet rs = stmt.executeQuery();
-                            
-                            //Check if the password entered matches the username
-                            if (rs.next() && rs.getString("Password").equals(pField.getText())) {
-                                System.out.println("Login Success");
-                                currentUser = uField.getText();
-                                viewAppointments(primaryStage);
-                            } else {
-                                System.out.println("Username or password is incorrect");
-                            }
-                        } catch (Exception e) {
-                            System.out.println(e);
+        scene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case ENTER:
+                    try {
+                        //Connect to the database
+                        conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                        h.setConnection(conn);
+
+                        //Query the database
+                        String query = "SELECT Password FROM users WHERE User_Name = ?";
+                        PreparedStatement stmt = conn.prepareStatement(query);
+                        stmt.setString(1, uField.getText());
+                        ResultSet rs = stmt.executeQuery();
+
+                        //Check if the password entered matches the username
+                        if (rs.next() && rs.getString("Password").equals(pField.getText())) {
+                            System.out.println("Login Success");
+                            currentUser = uField.getText();
+                            viewAppointments(primaryStage);
+                        } else {
+                            System.out.println("Username or password is incorrect");
                         }
-                }
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
             }
         });
         
@@ -355,7 +344,6 @@ public class AppointmentMaker extends Application {
         ToggleGroup weekOrMonth = new ToggleGroup();
         RadioButton week = new RadioButton("Week");
         week.setToggleGroup(weekOrMonth);
-        week.setSelected(true);
         RadioButton month = new RadioButton("Month");
         month.setToggleGroup(weekOrMonth);
         radioButtons.getChildren().addAll(week, month);
@@ -391,11 +379,14 @@ public class AppointmentMaker extends Application {
                 appointmentsTable.getColumns().add(col);
             }
             
-            //TODO READ BASED ON RADIO BUTTONS
-            csrData = h.getAppointments(0, rs);
-            
+            //TODO READ BASED ON RADIO BUTTONS ADD EVENT LISTENE
+            EventHandler<ActionEvent> weekEvent = (ActionEvent e) -> {
+                csrData = h.getAppointments(0, rs);
+            };
+            week.setOnAction(weekEvent);
+
             //Populate table with customer data
-            appointmentsTable.setItems(csrData);   
+            appointmentsTable.setItems(csrData);
         } catch (SQLException e) {
             System.out.println(e);
         }
@@ -548,9 +539,15 @@ public class AppointmentMaker extends Application {
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
                     eTMinute.getValue().toString(), csrField.getText(), userField.getText());
+            viewAppointments(primaryStage);
         };
         add.setOnAction(addEvent);
+
         Button cancel = new Button("Cancel");
+        EventHandler<ActionEvent> cancelEvent = (ActionEvent e) -> {
+            viewAppointments(primaryStage);
+        };
+        cancel.setOnAction(cancelEvent);
         
         //Add it all to the form
         form.add(id, 0, 0);
@@ -594,6 +591,152 @@ public class AppointmentMaker extends Application {
         //Add the form to the mainVBox
         mainVBox.getChildren().add(form);
         
+        primaryStage.setTitle("View Appointments");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    public void modifyAppointments(Stage primaryStage)  {
+        //Create the main vbox
+        VBox mainVBox = new VBox(20);
+
+        //Add all items to the root
+        Pane root = new Pane();
+        root.getChildren().add(mainVBox);
+        mainVBox.getStyleClass().add("mainPage");
+
+        //Create Scene
+        Scene scene = new Scene(root, 525, 610);
+        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+
+        //Create title HBox
+        HBox upper = new HBox();
+        upper.setAlignment(Pos.TOP_LEFT);
+        Label mTitle = new Label("Modify an Appointment");
+        mTitle.setStyle("-fx-font: 24 ariel;");
+        upper.getChildren().add(mTitle);
+        mainVBox.getChildren().add(upper);
+
+        //Creating tableview VBox
+        GridPane form = new GridPane();
+        form.setVgap(25);
+        form.setHgap(5);
+
+        //Creating some string arrays for the combo boxes
+        String hours[] = {"8", "9", "10", "11", "12", "13", "14", "15", "16",
+                "17", "18", "19", "20", "21", "22"};
+        String minutes[] = {"00", "01", "02", "03", "04", "05", "06", "07", "08",
+                "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+                "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
+                "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41",
+                "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52",
+                "53", "54", "55", "56", "57", "58", "59", "60"};
+
+        //Creating all Labels
+        Label id = new Label("ID");
+        Label title = new Label("Title");
+        Label desc = new Label("Description");
+        Label loc = new Label("Location");
+        Label contact = new Label("Contact");
+        Label type = new Label("Type");
+        Label sDate = new Label("Start Date");
+        Label sTime = new Label("Start Time");
+        Label eDate = new Label("End Date");
+        Label eTime = new Label("End Time");
+        Label csr = new Label("Customer ID");
+        Label user = new Label("User ID");
+
+        //Creating all fields
+        TextField idField = new TextField(Integer.toString(h.getNextApptId()));
+        idField.setDisable(true);
+        TextField titleField = new TextField();
+        titleField.setPromptText("Appointment title");
+        TextField descField = new TextField();
+        descField.setPromptText("A brief description");
+        TextField locField = new TextField();
+        locField.setPromptText("Where is the appointment");
+        ComboBox contactField = new ComboBox(h.getAllContacts());
+        contactField.setPromptText("Contact");
+        TextField typeField = new TextField();
+        typeField.setPromptText("What type of appointment");
+
+        DatePicker sDateField = new DatePicker();
+        ComboBox sTHour = new ComboBox(FXCollections.observableArrayList(hours));
+        sTHour.setPromptText("hh");
+        ComboBox sTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
+        sTMinute.setPromptText("mm");
+
+        DatePicker eDateField = new DatePicker();
+        ComboBox eTHour = new ComboBox(FXCollections.observableArrayList(hours));
+        eTHour.setPromptText("hh");
+        ComboBox eTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
+        eTMinute.setPromptText("mm");
+
+        TextField csrField = new TextField();
+        csrField.setPromptText("Who is the customer");
+        TextField userField = new TextField();
+        userField.setPromptText("Who is the user");
+
+        //Create the buttons
+        Button add = new Button("Add");
+        EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+            h.validateAppointment(currentUser, idField.getText(), titleField.getText(),
+                    descField.getText(), locField.getText(), contactField.getValue().toString(),
+                    typeField.getText(), sDateField, sTHour.getValue().toString(),
+                    sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
+                    eTMinute.getValue().toString(), csrField.getText(), userField.getText());
+            viewAppointments(primaryStage);
+        };
+        add.setOnAction(addEvent);
+
+        Button cancel = new Button("Cancel");
+        EventHandler<ActionEvent> cancelEvent = (ActionEvent e) -> {
+            viewAppointments(primaryStage);
+        };
+        cancel.setOnAction(cancelEvent);
+
+        //Add it all to the form
+        form.add(id, 0, 0);
+        form.add(idField, 1, 0);
+        form.add(title, 0, 1);
+        form.add(titleField, 1, 1);
+        form.add(desc, 0, 2);
+        form.add(descField, 1, 2);
+        form.add(loc, 0, 3);
+        form.add(locField, 1, 3);
+        form.add(contact, 0, 4);
+        form.add(contactField, 1, 4);
+        form.add(type, 0, 5);
+        form.add(typeField, 1, 5);
+
+        form.add(sDate, 0, 6);
+        form.add(sDateField, 1, 6);
+        form.add(sTime, 0, 7);
+        HBox sTimeField = new HBox();
+        sTimeField.getChildren().addAll(sTHour, sTMinute);
+        form.add(sTimeField, 1, 7);
+
+        form.add(eDate, 0, 8);
+        form.add(eDateField, 1, 8);
+        form.add(eTime, 0, 9);
+        HBox eTimeField = new HBox();
+        eTimeField.getChildren().addAll(eTHour, eTMinute);
+        form.add(eTimeField, 1, 9);
+
+        form.add(csr, 2, 0);
+        form.add(csrField, 3, 0);
+        form.add(user, 2, 1);
+        form.add(userField, 3, 1);
+
+        HBox buttons = new HBox(10);
+        buttons.setPadding(new Insets(0, 0, 0, 50));
+
+        buttons.getChildren().addAll(add, cancel);
+        form.add(buttons, 3, 10);
+
+        //Add the form to the mainVBox
+        mainVBox.getChildren().add(form);
+
         primaryStage.setTitle("View Appointments");
         primaryStage.setScene(scene);
         primaryStage.show();
