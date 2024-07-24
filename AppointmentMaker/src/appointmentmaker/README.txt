@@ -3,8 +3,6 @@ TO DO LIST
 Appointments
 •  make the modify appointment page
 •  make delete page button work
-•  verify that month/week radio buttons work as intended
-
 
 Customers
 •  create add customer page
