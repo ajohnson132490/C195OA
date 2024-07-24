@@ -350,7 +350,7 @@ public class AppointmentMaker extends Application {
         tableVBox.getChildren().add(radioButtons);
         
         //All Appointments TableView Table
-        TableView appointmentsTable = new TableView();
+        TableView<ObservableList> appointmentsTable = new TableView();
                 appointmentsTable.setPrefWidth(1200);
 
         AtomicReference<ObservableList<ObservableList>> csrData = new AtomicReference<>(FXCollections.observableArrayList());
@@ -417,7 +417,9 @@ public class AppointmentMaker extends Application {
         
         Button updateBtn = new Button("Update");
         EventHandler<ActionEvent> updateEvent = (ActionEvent e) -> {
-            //todo: create update form
+            //Get the appointment ID from the currently selected item and pass it along to the updateAppointments function
+            //TODO: Add try catch for if nothing is selected.
+            updateAppointments(primaryStage, Integer.parseInt(String.valueOf(appointmentsTable.getSelectionModel().getSelectedItem().get(0))));
         };
         updateBtn.setOnAction(updateEvent);
         
@@ -607,7 +609,11 @@ public class AppointmentMaker extends Application {
         primaryStage.show();
     }
 
-    public void modifyAppointments(Stage primaryStage)  {
+    public void updateAppointments(Stage primaryStage, int appointmentID)  {
+        //Get the current appointment
+        ObservableList<String> curAppt = FXCollections.observableArrayList();
+        curAppt = h.getAppointment(appointmentID);
+
         //Create the main vbox
         VBox mainVBox = new VBox(20);
 
