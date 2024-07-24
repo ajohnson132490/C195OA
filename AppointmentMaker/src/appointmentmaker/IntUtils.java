@@ -180,13 +180,15 @@ public class IntUtils {
      * <p>
      * When r is 0, the range is 7 days. When r is 1, the range is 31 days.
      * 
-     * @param r the range of dates
-     * @param rs the result set of the database query of all appointments
+     * @param time a char that allows the user to select a week or month time frame
+     *             denoted by 'w' for week or 'm' for month
      * @return an ObservableList of all the appointments within the specified range
      */
-    public ObservableList<ObservableList> getAppointments(int r, ResultSet rs) {
+    public ObservableList<ObservableList> getAppointments(char time) {
         ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
         try {
+            String query = "SELECT * FROM appointments";
+            ResultSet rs = conn.createStatement().executeQuery(query);
             //Populate the customers data into the data ObservableList
             while(rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
@@ -201,7 +203,7 @@ public class IntUtils {
                 if (current.getTime() <= appointmentStart.getTime()){
                     long difference = ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24)% 365);
 
-                    if (r == 0 && difference >= -7 || r == 1 && difference >= -31) {
+                    if (time == 'w' && difference >= -7 || time == 'm' && difference >= -31) {
                         for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                             //Add the data to a row
                             if (rs.getMetaData().getColumnName(i).equals("Start") ||
@@ -215,8 +217,8 @@ public class IntUtils {
                         //Add the full row to the observableList
                         csrData.add(row);
                     }
-                } else if (r != 0 && r != 1) {
-                    throw new IllegalArgumentException("r must be 1 or 0");
+                } else if (time != 'w' && time != 'm') {
+                    throw new IllegalArgumentException("Time must be 'w' for week or 'm' for month");
                 }
             }
         } catch (Exception ex) {
