@@ -27,7 +27,7 @@ import java.sql.*;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -338,23 +338,22 @@ public class AppointmentMaker extends Application {
         //Creating tableview VBox
         VBox tableVBox = new VBox(5);
         
-        
         //Week or Month Radio Buttons
         HBox radioButtons = new HBox(20);
         ToggleGroup weekOrMonth = new ToggleGroup();
         RadioButton week = new RadioButton("Week");
         week.setToggleGroup(weekOrMonth);
+        week.setSelected(true);
         RadioButton month = new RadioButton("Month");
         month.setToggleGroup(weekOrMonth);
         radioButtons.getChildren().addAll(week, month);
         tableVBox.getChildren().add(radioButtons);
         
-        
         //All Appointments TableView Table
         TableView appointmentsTable = new TableView();
                 appointmentsTable.setPrefWidth(1200);
 
-        ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
+        AtomicReference<ObservableList<ObservableList>> csrData = new AtomicReference<>(FXCollections.observableArrayList());
         try {            
             //Query the database
             String query = "SELECT * FROM appointments";
@@ -378,15 +377,27 @@ public class AppointmentMaker extends Application {
                 //Add column to the table
                 appointmentsTable.getColumns().add(col);
             }
-            
-            //TODO READ BASED ON RADIO BUTTONS ADD EVENT LISTENE
-            EventHandler<ActionEvent> weekEvent = (ActionEvent e) -> {
-                csrData = h.getAppointments(0, rs);
-            };
-            week.setOnAction(weekEvent);
+
+            //Week or month radio button functionality
+            week.setOnAction( e -> {
+                csrData.set(h.getAppointments('w'));
+                System.out.println(h.getAppointments('w'));
+                appointmentsTable.setItems(csrData.get());
+
+                appointmentsTable.refresh();
+            });
+            month.setOnAction( e -> {
+                if (month.isSelected()) {
+                    csrData.set(h.getAppointments('m'));
+                    System.out.println(csrData.get());
+                    appointmentsTable.getItems().clear();
+                    appointmentsTable.setItems(csrData.get());
+                }
+            });
 
             //Populate table with customer data
-            appointmentsTable.setItems(csrData);
+            csrData.set(h.getAppointments('w'));
+            appointmentsTable.setItems(csrData.get());
         } catch (SQLException e) {
             System.out.println(e);
         }
