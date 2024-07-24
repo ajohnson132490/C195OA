@@ -139,24 +139,7 @@ public class IntUtils {
         
         return localFormat.format(date);
     }
-    
-    public String convertTimeToET(String utc) {
-        //Get my utc time into a DateFormat
-        DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        java.util.Date date = null;
-        try {
-            date = utcFormat.parse(utc);
-        } catch (ParseException ex) {
-            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        DateFormat estFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        estFormat.setTimeZone(TimeZone.getTimeZone("EST"));
-        
-        return estFormat.format(date);
-    }
-    
+
     public String convertTimeToUTC(String est) {
         //Get my utc time into a DateFormat
         DateFormat estFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -227,41 +210,32 @@ public class IntUtils {
         
         return csrData;
     }
-    
-    public ObservableList<ObservableList> getAppointments(int userID) {
-        ObservableList<ObservableList> userAppointments = FXCollections.observableArrayList();
+
+    public ObservableList<String> getAppointment(int id) {
         try {
-            //Query the database
-            String query = "SELECT Start, End FROM appointments WHERE User_ID = ?";
+            String query = "SELECT * FROM appointments WHERE Appointment_ID = ? ";
             PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, Integer.toString(userID));
+            stmt.setString(1, String.valueOf(id));
             ResultSet rs = stmt.executeQuery();
-            
-            while (rs.next()) {
+
+            //Populate the customers data into the data ObservableList
+            while(rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
-                
-                //Add the data to the row
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                        //Add the data to a row
-                        if (rs.getMetaData().getColumnName(i).equals("Start") || 
-                                rs.getMetaData().getColumnName(i).equals("End") ||
-                                rs.getMetaData().getColumnName(i).equals("Last_Update")) {
-                            row.add(convertTimeToET(rs.getString(i)));
-                        } else {
-                            row.add(rs.getString(i));
-                        }
+                    //Add the data to a row
+                    row.add(rs.getString(i));
                 }
-                
-                //Add the row to the data
-                userAppointments.add(row);
+
+                //Add the full row to the appointment
+                return row;
             }
-         } catch (SQLException e) {
-             System.out.println(e);
-         }
-        
-        return userAppointments;
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return null;
     }
-    
+
     public int getNextApptId() {
          try {
             //Query the database
