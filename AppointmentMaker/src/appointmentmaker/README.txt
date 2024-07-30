@@ -1,9 +1,5 @@
 TO DO LIST
 
-Appointments
-•  make the modify appointment page
-•  make delete page button work
-
 Customers
 •  create add customer page
 •  create modify customer page

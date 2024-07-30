@@ -24,6 +24,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -103,7 +104,6 @@ public class AppointmentMaker extends Application {
 
                 //Check if the password entered matches the username
                 if (rs.next() && rs.getString("Password").equals(pField.getText())) {
-                    System.out.println("Login Success");
                     currentUser = uField.getText();
                     viewAppointments(primaryStage);
                 } else {
@@ -129,7 +129,6 @@ public class AppointmentMaker extends Application {
 
                         //Check if the password entered matches the username
                         if (rs.next() && rs.getString("Password").equals(pField.getText())) {
-                            System.out.println("Login Success");
                             currentUser = uField.getText();
                             viewAppointments(primaryStage);
                         } else {
@@ -381,7 +380,6 @@ public class AppointmentMaker extends Application {
             //Week or month radio button functionality
             week.setOnAction( e -> {
                 csrData.set(h.getAppointments('w'));
-                System.out.println(h.getAppointments('w'));
                 appointmentsTable.setItems(csrData.get());
 
                 appointmentsTable.refresh();
@@ -389,7 +387,6 @@ public class AppointmentMaker extends Application {
             month.setOnAction( e -> {
                 if (month.isSelected()) {
                     csrData.set(h.getAppointments('m'));
-                    System.out.println(csrData.get());
                     appointmentsTable.getItems().clear();
                     appointmentsTable.setItems(csrData.get());
                 }
@@ -418,14 +415,23 @@ public class AppointmentMaker extends Application {
         Button updateBtn = new Button("Update");
         EventHandler<ActionEvent> updateEvent = (ActionEvent e) -> {
             //Get the appointment ID from the currently selected item and pass it along to the updateAppointments function
-            //TODO: Add try catch for if nothing is selected.
-            updateAppointments(primaryStage, Integer.parseInt(String.valueOf(appointmentsTable.getSelectionModel().getSelectedItem().get(0))));
+            try {
+                updateAppointments(primaryStage, Integer.parseInt(String.valueOf(appointmentsTable.getSelectionModel().getSelectedItem().get(0))));
+            } catch (Exception ex) {
+                System.out.println("No appointment selected");
+            }
         };
         updateBtn.setOnAction(updateEvent);
         
         Button deleteBtn = new Button("Delete");
         EventHandler<ActionEvent> deleteEvent = (ActionEvent e) -> {
-            //todo: figure out how to delete items and refresh the tableview
+            //Get the appointment ID from the currently selected item and delete the item then refresh the page
+            try {
+                h.deleteAppointment(String.valueOf(appointmentsTable.getSelectionModel().getSelectedItem().get(0)));
+                viewAppointments(primaryStage);
+            } catch (Exception ex) {
+                System.out.println("No appointment selected");
+            }
         };
         deleteBtn.setOnAction(deleteEvent);
         
@@ -613,6 +619,8 @@ public class AppointmentMaker extends Application {
         //Get the current appointment
         ObservableList<String> curAppt = FXCollections.observableArrayList();
         curAppt = h.getAppointment(appointmentID);
+        String tmp = curAppt.toString().substring(1, curAppt.toString().length()-2);
+        String[] oldAppt = tmp.split(", ");
 
         //Create the main vbox
         VBox mainVBox = new VBox(20);
@@ -663,45 +671,51 @@ public class AppointmentMaker extends Application {
         Label csr = new Label("Customer ID");
         Label user = new Label("User ID");
 
-        //Creating all fields
-        TextField idField = new TextField(Integer.toString(h.getNextApptId()));
+        //Creating all fields and pre filling the values
+        TextField idField = new TextField(oldAppt[0]);
         idField.setDisable(true);
-        TextField titleField = new TextField();
-        titleField.setPromptText("Appointment title");
-        TextField descField = new TextField();
-        descField.setPromptText("A brief description");
-        TextField locField = new TextField();
-        locField.setPromptText("Where is the appointment");
+        TextField titleField = new TextField(oldAppt[1]);
+        TextField descField = new TextField(oldAppt[2]);
+        TextField locField = new TextField(oldAppt[3]);
         ComboBox contactField = new ComboBox(h.getAllContacts());
-        contactField.setPromptText("Contact");
-        TextField typeField = new TextField();
-        typeField.setPromptText("What type of appointment");
+        contactField.setValue(h.getContact(Integer.parseInt(oldAppt[12])));
+        TextField typeField = new TextField(oldAppt[4]);
 
+        //Separating out the dates and times.
+        String[] start = oldAppt[5].split(" ");
+        LocalDate oldSDate = LocalDate.parse(start[0]);
         DatePicker sDateField = new DatePicker();
+        sDateField.setValue(oldSDate);
+        start = start[1].split(":");
         ComboBox sTHour = new ComboBox(FXCollections.observableArrayList(hours));
-        sTHour.setPromptText("hh");
+        sTHour.setValue(String.valueOf(Integer.parseInt(start[0]) - 6));
         ComboBox sTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
-        sTMinute.setPromptText("mm");
+        sTMinute.setValue(start[1]);
 
+        String[] end = oldAppt[6].split(" ");
+        LocalDate oldEDate  = LocalDate.parse(end[0]);
         DatePicker eDateField = new DatePicker();
+        eDateField.setValue(oldEDate);
+        end = end[1].split(":");
         ComboBox eTHour = new ComboBox(FXCollections.observableArrayList(hours));
-        eTHour.setPromptText("hh");
+        eTHour.setValue(String.valueOf(Integer.parseInt(end[0]) - 6));
         ComboBox eTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
-        eTMinute.setPromptText("mm");
+        eTMinute.setValue(end[1]);
 
-        TextField csrField = new TextField();
-        csrField.setPromptText("Who is the customer");
-        TextField userField = new TextField();
-        userField.setPromptText("Who is the user");
+        TextField csrField = new TextField(oldAppt[11]);
+        TextField userField = new TextField(String.valueOf(h.getUserId(oldAppt[10])));
+
+        System.out.println(userField.getText());
 
         //Create the buttons
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+            h.deleteAppointment(idField.getText());
             h.validateAppointment(currentUser, idField.getText(), titleField.getText(),
                     descField.getText(), locField.getText(), contactField.getValue().toString(),
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
-                    eTMinute.getValue().toString(), csrField.getText(), userField.getText());
+                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), oldAppt[7]);
             viewAppointments(primaryStage);
         };
         add.setOnAction(addEvent);

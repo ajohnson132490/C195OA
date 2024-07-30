@@ -157,6 +157,23 @@ public class IntUtils {
         return utcFormat.format(date);
     }
     
+    public int getUserId(String name) {
+        try {
+            String query = "SELECT User_ID FROM users WHERE User_Name = ? ";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, String.valueOf(name));
+            ResultSet rs = stmt.executeQuery();
+
+            //Populate the customers data into the data ObservableList
+            rs.next();
+            return rs.getInt(1);
+        } catch (Exception e) {
+            System.out.println("getUserID: " + e);
+        }
+
+        return -1;
+    }
+
     /**
      * This function finds all appointments within a given range, and returns 
      * all of those appointments in a list.
@@ -204,8 +221,8 @@ public class IntUtils {
                     throw new IllegalArgumentException("Time must be 'w' for week or 'm' for month");
                 }
             }
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception e) {
+            System.out.println("getAppoointments: " + e);
         }
         
         return csrData;
@@ -229,9 +246,8 @@ public class IntUtils {
                 //Add the full row to the appointment
                 return row;
             }
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        } catch (Exception e) {
+            System.out.println("getAppoointments: " + e);        }
 
         return null;
     }
@@ -288,6 +304,24 @@ public class IntUtils {
         return "Selected CONTACT does not exist";
     }
 
+    public String getContact(int contact) {
+        try {
+            //Query the database for the customer
+            String query = "SELECT Contact_Name FROM contacts WHERE Contact_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, String.valueOf(contact));
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString(1);
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+            return "Error querying the database for the CONTACT";
+        }
+        return "Selected CONTACT does not exist";
+    }
+
     public void validateAppointment(String currentUser, String apptID, String title, String desc,
             String loc, String contact, String type, DatePicker sDate, String sTHour,
             String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
@@ -327,7 +361,7 @@ public class IntUtils {
                 startTime = formatter.parse(convertTimeToUTC(startDate.toString() + " " + sTHour + ":" + sTMinute + ":00"));
                 endTime = formatter.parse(convertTimeToUTC(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00"));
             } catch (ParseException ex) {
-                java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println("validateAppointment: " + ex);
             }
             
             //Check if appointment starts before it ends, and if its within office hours
@@ -351,11 +385,6 @@ public class IntUtils {
                 
                 int resultStart = startTime.compareTo(tempStart);
                 int resultEnd = endTime.compareTo(tempEnd);
-                
-                System.out.println("Start: " + startTime.toString());
-                System.out.println("End: " + endTime.toString());
-                System.out.println("tempStart: " + tempStart.toString());
-                System.out.println("tempEnd: " + tempEnd.toString());
 
                 //Throw an error if there's an appointment with an overlap
                 if (startTime.before(tempEnd) && endTime.after(tempStart)) {
@@ -371,6 +400,89 @@ public class IntUtils {
             addAppointment(currentUser, apptID, title, desc,
             loc, contact, type, start, end, csr, user);
             
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    public void validateAppointment(String currentUser, String apptID, String title, String desc,
+                                    String loc, String contact, String type, DatePicker sDate, String sTHour,
+                                    String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
+                                    String csr, String user, String creationDate) {
+        try {
+            //Query the database for the user
+            String query = "SELECT * FROM users WHERE User_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, user);
+            ResultSet userRS = stmt.executeQuery();
+
+            //Query the database for the customer
+            query = "SELECT * FROM customers WHERE Customer_ID = ?";
+            stmt = conn.prepareStatement(query);
+            stmt.setString(1, csr);
+            ResultSet csrRS = stmt.executeQuery();
+
+            //Check for user
+            if (!userRS.next()) {
+                throw new IllegalArgumentException("Selected USER does not exist");
+            }
+
+            //Check for customer
+            if (!csrRS.next()) {
+                throw new IllegalArgumentException("Selected CUSTOMER does not exist");
+            }
+
+            //Create all variables to check date and time
+            LocalDate startDate = sDate.getValue();
+            LocalDate endDate = eDate.getValue();
+            Date startTime = null;
+            Date endTime = null;
+
+            //Get my start and end time into date format for comparison
+            DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            try {
+                startTime = formatter.parse(convertTimeToUTC(startDate.toString() + " " + sTHour + ":" + sTMinute + ":00"));
+                endTime = formatter.parse(convertTimeToUTC(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00"));
+            } catch (ParseException ex) {
+                System.out.println("validateAppointment: " + ex);
+            }
+
+            //Check if appointment starts before it ends, and if its within office hours
+            if (!duringOfficeHours(eTHour, eTMinute)) {
+                throw new IllegalArgumentException("Appointment must end by 22:00 ET");
+            }
+            if (startDate.compareTo(endDate) > 0) {
+                throw new IllegalArgumentException("Start date must be before end date.");
+            }
+
+            //Query the database for all customer appointments
+            query = "SELECT Start, End FROM appointments WHERE Customer_ID = ?";
+            stmt = conn.prepareStatement(query);
+            stmt.setString(1, csr);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                //Format and compare dates
+                Date tempStart = formatter.parse(rs.getString(1));
+                Date tempEnd = formatter.parse(rs.getString(2));
+
+                int resultStart = startTime.compareTo(tempStart);
+                int resultEnd = endTime.compareTo(tempEnd);
+
+                //Throw an error if there's an appointment with an overlap
+                if (startTime.before(tempEnd) && endTime.after(tempStart)) {
+                    throw new IllegalArgumentException("This appointment overlaps with an existing appointment for this customer.");
+                }
+            }
+
+            //Format the times correctly
+            String start = formatter.format(startTime);
+            String end = formatter.format(endTime);
+
+            //Add the appt
+            addAppointment(currentUser, apptID, title, desc,
+                    loc, contact, type, start, end, csr, user, creationDate);
+
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -414,4 +526,53 @@ public class IntUtils {
             System.out.println(e);
         }
     }
+
+    private void addAppointment(String currentUser, String apptID, String title, String desc,
+                                String loc, String contact, String type, String start, String end,
+                                String csr, String user, String creationDate) {
+        try {
+            //Create the query
+            String query = "INSERT INTO appointments "
+                    + "(Appointment_ID, Title, Description, Location, Type, Start, End,"
+                    + "Create_Date, Created_By, Last_Update, Last_Updated_By, Customer_ID,"
+                    + "User_ID, Contact_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+
+            //Set all the variables
+            stmt.setString(1, apptID);
+            stmt.setString(2, title);
+            stmt.setString(3, desc);
+            stmt.setString(4, loc);
+            stmt.setString(5, type);
+            stmt.setString(6, start);
+            stmt.setString(7, end);
+            stmt.setString(8, creationDate);
+            stmt.setString(9, currentUser);
+            stmt.setString(10, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            stmt.setString(11, currentUser);
+            stmt.setString(12, csr);
+            stmt.setString(13, user);
+            stmt.setString(14, getContact(contact));
+
+            //Execute
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+    }
+
+    public void deleteAppointment(String id) {
+        try {
+            //Query the database for the customer
+            String query = "DELETE FROM appointments WHERE Appointment_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, id);
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println("deleteAppointment: " + e);
+        }
+    }
 }
+
+
