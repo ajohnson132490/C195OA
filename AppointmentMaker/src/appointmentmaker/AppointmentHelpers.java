@@ -26,16 +26,12 @@ import java.util.logging.Level;
  *
  * @author LabUser
  */
-public class IntUtils {
+public class AppointmentHelpers {
     private Connection conn;
-    
-    /**
-     *
-     * @param conn
-     */
-    public void setConnection(Connection conn) {
-        this.conn = conn;
-    }
+
+
+
+
     
     /**
      * This function formats all columns for the customer table 
@@ -81,47 +77,14 @@ public class IntUtils {
         };
     }
     
-    /**
-     *
-     * @param address
-     * @return
-     */
-    public String formatAddress(String address) {
-        try {
-            
-            //Find the country name
-            String query = "SELECT Country FROM countries WHERE Country_ID = "
-                    + "(SELECT Country_ID FROM first_level_divisions WHERE Division_ID = "
-                    + "(SELECT Division_ID from customers WHERE Address = ?))";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, address);
-            ResultSet rs = stmt.executeQuery();
-            rs.next();
-            
-            //Find the first level division
-            String query2 = "SELECT Division FROM first_level_divisions WHERE Division_ID = "
-                    + "(SELECT Division_ID from customers WHERE Address = ?)";
-            PreparedStatement stmt2 = conn.prepareStatement(query2);
-            stmt2.setString(1, address);
-            ResultSet rs2 = stmt2.executeQuery();
-            rs2.next();
-            
-            //return country name
-            if (rs.getString("Country").equals("Canada")) {
-                return "Canadian address: " + address + ", " + rs2.getString("Division");
-            }
-            return rs.getString("Country") + " address: " + address + ", " + rs2.getString("Division");
-            
-        } catch (Exception e) {
-            System.out.println(e);
-            return null;
-        }
-    }
+
     
     /**
+     * Converts the given time from UTC to the local timezone on the
+     * users' computer.
      *
-     * @param utc
-     * @return
+     * @param utc the time in UTC
+     * @return the time in the local time zone
      */
     public String convertTimeToLocal(String utc) {
         //Get my utc time into a DateFormat
@@ -140,15 +103,22 @@ public class IntUtils {
         return localFormat.format(date);
     }
 
-    public String convertTimeToUTC(String est) {
+    /**
+     * Converts the given time from local time to UTC
+     * for server storage.
+     *
+     * @param loc the time in the local time zone
+     * @return the time in UTC timezone
+     */
+    public String convertTimeToUTC(String loc) {
         //Get my utc time into a DateFormat
-        DateFormat estFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        estFormat.setTimeZone(TimeZone.getTimeZone("EST"));
+        DateFormat localFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        localFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
         java.util.Date date = null;
         try {
-            date = estFormat.parse(est);
-        } catch (ParseException ex) {
-            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+            date = localFormat.parse(loc);
+        } catch (ParseException e) {
+            System.out.println("convertTimeToUTC: " + e);
         }
         
         DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -156,29 +126,12 @@ public class IntUtils {
         
         return utcFormat.format(date);
     }
-    
-    public int getUserId(String name) {
-        try {
-            String query = "SELECT User_ID FROM users WHERE User_Name = ? ";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, String.valueOf(name));
-            ResultSet rs = stmt.executeQuery();
-
-            //Populate the customers data into the data ObservableList
-            rs.next();
-            return rs.getInt(1);
-        } catch (Exception e) {
-            System.out.println("getUserID: " + e);
-        }
-
-        return -1;
-    }
 
     /**
      * This function finds all appointments within a given range, and returns 
      * all of those appointments in a list.
      * <p>
-     * When r is 0, the range is 7 days. When r is 1, the range is 31 days.
+     * When time is 'w', the range is 7 days. When time is 'm', the range is 31 days.
      * 
      * @param time a char that allows the user to select a week or month time frame
      *             denoted by 'w' for week or 'm' for month
@@ -228,6 +181,14 @@ public class IntUtils {
         return csrData;
     }
 
+    /**
+     * This function gets an appointment from the server and
+     * populates the data into an ObservableList<String> for
+     * the update appointment screen
+     *
+     * @param id the unique ID of the appointment being retrieved
+     * @return an ObservableList<String> containing all the appointment's data
+     */
     public ObservableList<String> getAppointment(int id) {
         try {
             String query = "SELECT * FROM appointments WHERE Appointment_ID = ? ";
@@ -252,6 +213,12 @@ public class IntUtils {
         return null;
     }
 
+    /**
+     * Finds the current highest appointment ID and return the next lowest
+     * unique ID
+     *
+     * @return the lowest unique appointment ID
+     */
     public int getNextApptId() {
          try {
             //Query the database
@@ -267,7 +234,13 @@ public class IntUtils {
          
          return -1;
     }
-    
+
+    /**
+     * Gets the names of all the contacts in the contact table
+     * and returns it as a list.
+     *
+     * @return an ObservableList<String> of all the contacts' names
+     */
     public ObservableList<String> getAllContacts() {
         ObservableList<String> contacts = FXCollections.observableArrayList();
         try {
@@ -285,7 +258,13 @@ public class IntUtils {
          
          return null;
     }
-    
+
+    /**
+     * Finds a contact's ID given the name.
+     *
+     * @param contact the name of the contact
+     * @return the contact's ID
+     */
     public String getContact(String contact) {
         try {
             //Query the database for the customer
@@ -304,6 +283,12 @@ public class IntUtils {
         return "Selected CONTACT does not exist";
     }
 
+    /**
+     * Finds a contact's name given the ID.
+     *
+     * @param contact the contact's ID
+     * @return the contact's name
+     */
     public String getContact(int contact) {
         try {
             //Query the database for the customer
@@ -322,7 +307,32 @@ public class IntUtils {
         return "Selected CONTACT does not exist";
     }
 
-    public void validateAppointment(String currentUser, String apptID, String title, String desc,
+    /**
+     * This function validates that the data entered into the add appointment page is valid.
+     * <p>
+     * Its validity is verified by confirming that the user and customer exist, that the
+     * appointment is during office hours, and that the appointment doesn't overlap with
+     * any other appointment.
+     *
+     * @param currentUser the current user creating the program
+     * @param apptID the unique appointment id
+     * @param title the name of the appointment
+     * @param desc appointment description
+     * @param loc appointment location
+     * @param contact the appointment contact person
+     * @param type the type of appointment
+     * @param sDate the day the appointment starts
+     * @param sTHour the hour the appointment starts
+     * @param sTMinute the minute the appointment starts
+     * @param eDate the day the appointment ends
+     * @param eTHour the hour the appointment ends
+     * @param eTMinute the minute the appointment ends
+     * @param csr the customer
+     * @param user the user meeting with the customer
+     *
+     * @return returns true if validation was sucessful, false if there was an error
+     */
+    public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
             String loc, String contact, String type, DatePicker sDate, String sTHour,
             String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
             String csr, String user) {
@@ -341,12 +351,14 @@ public class IntUtils {
             
             //Check for user
             if (!userRS.next()) {
-                throw new IllegalArgumentException("Selected USER does not exist");
+                System.out.println("Selected USER does not exist");
+                return false;
             }
             
             //Check for customer
             if (!csrRS.next()) {
-                throw new IllegalArgumentException("Selected CUSTOMER does not exist");
+                System.out.println("Selected CUSTOMER does not exist");
+                return false;
             }
             
             //Create all variables to check date and time
@@ -362,14 +374,17 @@ public class IntUtils {
                 endTime = formatter.parse(convertTimeToUTC(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00"));
             } catch (ParseException ex) {
                 System.out.println("validateAppointment: " + ex);
+                return false;
             }
             
             //Check if appointment starts before it ends, and if its within office hours
             if (!duringOfficeHours(eTHour, eTMinute)) {
-                throw new IllegalArgumentException("Appointment must end by 22:00 ET");
+                System.out.println("Appointment must end by 22:00 ET");
+                return false;
             }
             if (startDate.compareTo(endDate) > 0) {
-                throw new IllegalArgumentException("Start date must be before end date.");
+                System.out.println("Start date must be before end date.");
+                return false;
             } 
 
             //Query the database for all customer appointments
@@ -388,7 +403,8 @@ public class IntUtils {
 
                 //Throw an error if there's an appointment with an overlap
                 if (startTime.before(tempEnd) && endTime.after(tempStart)) {
-                    throw new IllegalArgumentException("This appointment overlaps with an existing appointment for this customer.");
+                    System.out.println("This appointment overlaps with an existing appointment for this customer.");
+                    return false;
                 }        
             }
 
@@ -402,10 +418,41 @@ public class IntUtils {
             
         } catch (Exception e) {
             System.out.println(e);
+            return false;
         }
+        return true;
     }
 
-    public void validateAppointment(String currentUser, String apptID, String title, String desc,
+    /**
+     * This function validates that the data entered into the add appointment page is valid.
+     * <p>
+     * Its validity is verified by confirming that the user and customer exist, that the
+     * appointment is during office hours, and that the appointment doesn't overlap with
+     * any other appointment.
+     * <p>
+     * This function also explicitly notes the creation date instead of assigning the current
+     * date as the creation date.
+     *
+     * @param currentUser the current user creating the program
+     * @param apptID the unique appointment id
+     * @param title the name of the appointment
+     * @param desc appointment description
+     * @param loc appointment location
+     * @param contact the appointment contact person
+     * @param type the type of appointment
+     * @param sDate the day the appointment starts
+     * @param sTHour the hour the appointment starts
+     * @param sTMinute the minute the appointment starts
+     * @param eDate the day the appointment ends
+     * @param eTHour the hour the appointment ends
+     * @param eTMinute the minute the appointment ends
+     * @param csr the customer
+     * @param user the user meeting with the customer
+     * @param creationDate the day the appointment was first created
+     *
+     * @return returns true if validation was sucessful, false if there was an error
+     */
+    public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
                                     String loc, String contact, String type, DatePicker sDate, String sTHour,
                                     String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
                                     String csr, String user, String creationDate) {
@@ -424,12 +471,14 @@ public class IntUtils {
 
             //Check for user
             if (!userRS.next()) {
-                throw new IllegalArgumentException("Selected USER does not exist");
+                System.out.println("Selected USER does not exist");
+                return false;
             }
 
             //Check for customer
             if (!csrRS.next()) {
-                throw new IllegalArgumentException("Selected CUSTOMER does not exist");
+                System.out.println("Selected CUSTOMER does not exist");
+                return false;
             }
 
             //Create all variables to check date and time
@@ -445,14 +494,17 @@ public class IntUtils {
                 endTime = formatter.parse(convertTimeToUTC(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00"));
             } catch (ParseException ex) {
                 System.out.println("validateAppointment: " + ex);
+                return false;
             }
 
             //Check if appointment starts before it ends, and if its within office hours
             if (!duringOfficeHours(eTHour, eTMinute)) {
-                throw new IllegalArgumentException("Appointment must end by 22:00 ET");
+                System.out.println("Appointment must end by 22:00 ET");
+                return false;
             }
             if (startDate.compareTo(endDate) > 0) {
-                throw new IllegalArgumentException("Start date must be before end date.");
+                System.out.println("Start date must be before end date.");
+                return false;
             }
 
             //Query the database for all customer appointments
@@ -471,7 +523,8 @@ public class IntUtils {
 
                 //Throw an error if there's an appointment with an overlap
                 if (startTime.before(tempEnd) && endTime.after(tempStart)) {
-                    throw new IllegalArgumentException("This appointment overlaps with an existing appointment for this customer.");
+                    System.out.println("This appointment overlaps with an existing appointment for this customer.");
+                    return false;
                 }
             }
 
@@ -485,14 +538,37 @@ public class IntUtils {
 
         } catch (Exception e) {
             System.out.println(e);
+            return false;
         }
+        return true;
     }
-    
+
+    /**
+     * Checks if the appointment ends by the end of the day.
+     *
+     * @param eTHour the hour the appointment ends
+     * @param eTMinute the minute the appointment ends
+     * @return returns true if the appointment is during office hours, and false if the appointment goes past the end of the day
+     */
     public boolean duringOfficeHours(String eTHour, String eTMinute) {
         return !(eTHour.equals("22") && !eTMinute.equals("00"));
     }
-    
-    
+
+    /**
+     * Adds an appointment to the database using the data from validateAppointment.
+     *
+     * @param currentUser the user adding the appointment
+     * @param apptID the unique appointment id
+     * @param title the name of the appointment
+     * @param desc appointment description
+     * @param loc appointment location
+     * @param contact the appointment contact person
+     * @param type the type of appointment
+     * @param start the starting datetime
+     * @param end the ending datetime
+     * @param csr the customer
+     * @param user the user meeting with the customer
+     */
     private void addAppointment(String currentUser, String apptID, String title, String desc,
             String loc, String contact, String type, String start, String end,
             String csr, String user) {
@@ -527,6 +603,24 @@ public class IntUtils {
         }
     }
 
+    /**
+     * Adds an appointment to the database using the data from validateAppointment.
+     * <p>
+     * This function also explicitly sets the creation date.
+     *
+     * @param currentUser the user adding the appointment
+     * @param apptID the unique appointment id
+     * @param title the name of the appointment
+     * @param desc appointment description
+     * @param loc appointment location
+     * @param contact the appointment contact person
+     * @param type the type of appointment
+     * @param start the starting datetime
+     * @param end the ending datetime
+     * @param csr the customer
+     * @param user the user meeting with the customer
+     * @param creationDate the date the appointment was originally created
+     */
     private void addAppointment(String currentUser, String apptID, String title, String desc,
                                 String loc, String contact, String type, String start, String end,
                                 String csr, String user, String creationDate) {
@@ -561,6 +655,12 @@ public class IntUtils {
         }
     }
 
+    /**
+     * This function deletes the given appointment from the
+     * appointment table.
+     *
+     * @param id the id of the appointment to be deleted
+     */
     public void deleteAppointment(String id) {
         try {
             //Query the database for the customer
@@ -572,6 +672,16 @@ public class IntUtils {
         } catch (Exception e) {
             System.out.println("deleteAppointment: " + e);
         }
+    }
+
+    /**
+     * This function sets the connection to the database used by all the
+     * other functions
+     *
+     * @param conn the connection to the appointment maker database
+     */
+    public void setConnection(Connection conn) {
+        this.conn = conn;
     }
 }
 
