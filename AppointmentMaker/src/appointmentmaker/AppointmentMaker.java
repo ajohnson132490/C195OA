@@ -42,7 +42,8 @@ public class AppointmentMaker extends Application {
     private static final String PASSWORD = "Passw0rd!";
     private Locale locale;
     private ResourceBundle lang;
-    private IntUtils h;
+    private AppointmentHelpers h;
+    private CustomerHelpers g;
     private String currentUser;
     
     
@@ -57,7 +58,8 @@ public class AppointmentMaker extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        h = new IntUtils();
+        h = new AppointmentHelpers();
+        g = new CustomerHelpers();
         ///Start on the Login screen
         //Set Language
         locale = new Locale("fr", "FR");
@@ -95,6 +97,8 @@ public class AppointmentMaker extends Application {
                 //Connect to the database
                 conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
                 h.setConnection(conn);
+                g.setConnection(conn);
+
 
                 //Query the database
                 String query = "SELECT Password FROM users WHERE User_Name = ?";
@@ -237,7 +241,7 @@ public class AppointmentMaker extends Application {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     //Add the data to a row
                     if (rs.getMetaData().getColumnName(i).equals("Address")) {
-                        row.add(h.formatAddress(rs.getString(i)));
+                        row.add(g.formatAddress(rs.getString(i)));
                         
                     } else {
                         row.add(rs.getString(i));
@@ -553,12 +557,15 @@ public class AppointmentMaker extends Application {
         //Create the buttons
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
-            h.validateAppointment(currentUser, idField.getText(), titleField.getText(),
+            if (h.validateAppointment(currentUser, idField.getText(), titleField.getText(),
                     descField.getText(), locField.getText(), contactField.getValue().toString(),
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
-                    eTMinute.getValue().toString(), csrField.getText(), userField.getText());
-            viewAppointments(primaryStage);
+                    eTMinute.getValue().toString(), csrField.getText(), userField.getText())) {
+                viewAppointments(primaryStage);
+            } else {
+                System.out.println("Error validating appointment data. Please recheck all values.");
+            }
         };
         add.setOnAction(addEvent);
 
@@ -671,7 +678,7 @@ public class AppointmentMaker extends Application {
         Label csr = new Label("Customer ID");
         Label user = new Label("User ID");
 
-        //Creating all fields and pre filling the values
+        //Creating all fields and pre-filling the values
         TextField idField = new TextField(oldAppt[0]);
         idField.setDisable(true);
         TextField titleField = new TextField(oldAppt[1]);
@@ -688,6 +695,7 @@ public class AppointmentMaker extends Application {
         sDateField.setValue(oldSDate);
         start = start[1].split(":");
         ComboBox sTHour = new ComboBox(FXCollections.observableArrayList(hours));
+        //Double check that the - 6 makes sense even if you're in french mode
         sTHour.setValue(String.valueOf(Integer.parseInt(start[0]) - 6));
         ComboBox sTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
         sTMinute.setValue(start[1]);
@@ -702,21 +710,23 @@ public class AppointmentMaker extends Application {
         ComboBox eTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
         eTMinute.setValue(end[1]);
 
-        TextField csrField = new TextField(oldAppt[11]);
-        TextField userField = new TextField(String.valueOf(h.getUserId(oldAppt[10])));
 
-        System.out.println(userField.getText());
+        TextField csrField = new TextField(oldAppt[11]);
+        TextField userField = new TextField(oldAppt[12]);
 
         //Create the buttons
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
             h.deleteAppointment(idField.getText());
-            h.validateAppointment(currentUser, idField.getText(), titleField.getText(),
+            if (h.validateAppointment(currentUser, idField.getText(), titleField.getText(),
                     descField.getText(), locField.getText(), contactField.getValue().toString(),
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
-                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), oldAppt[7]);
-            viewAppointments(primaryStage);
+                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), oldAppt[7])) {
+                viewAppointments(primaryStage);
+            } else {
+                System.out.println("Error validating appointment data. Please recheck all values.");
+            }
         };
         add.setOnAction(addEvent);
 
