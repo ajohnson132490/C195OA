@@ -1,13 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package appointmentmaker;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.DatePicker;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,16 +18,14 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 
 /**
+ * This class containts functions designed to abstract the functionality of creating, modifying,
+ * deleting, and viewing appointments.
  *
- * @author LabUser
+ * @author Austin Johnson
  */
 public class AppointmentHelpers {
     private Connection conn;
 
-
-
-
-    
     /**
      * This function formats all columns for the customer table 
      * into a more user friendly format without all of the underscores.
@@ -76,8 +69,6 @@ public class AppointmentHelpers {
             default -> attribute;
         };
     }
-    
-
     
     /**
      * Converts the given time from UTC to the local timezone on the
@@ -430,8 +421,8 @@ public class AppointmentHelpers {
      * appointment is during office hours, and that the appointment doesn't overlap with
      * any other appointment.
      * <p>
-     * This function also explicitly notes the creation date instead of assigning the current
-     * date as the creation date.
+     * This function explicitly notes the original appointment creator and creation date instead of assigning the
+     * current user as the creator and the current date as the creation date.
      *
      * @param currentUser the current user creating the program
      * @param apptID the unique appointment id
@@ -448,6 +439,7 @@ public class AppointmentHelpers {
      * @param eTMinute the minute the appointment ends
      * @param csr the customer
      * @param user the user meeting with the customer
+     * @param createdBy the user who created the appointment
      * @param creationDate the day the appointment was first created
      *
      * @return returns true if validation was sucessful, false if there was an error
@@ -455,7 +447,7 @@ public class AppointmentHelpers {
     public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
                                     String loc, String contact, String type, DatePicker sDate, String sTHour,
                                     String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
-                                    String csr, String user, String creationDate) {
+                                    String csr, String user, String createdBy, String creationDate) {
         try {
             //Query the database for the user
             String query = "SELECT * FROM users WHERE User_ID = ?";
@@ -534,7 +526,7 @@ public class AppointmentHelpers {
 
             //Add the appt
             addAppointment(currentUser, apptID, title, desc,
-                    loc, contact, type, start, end, csr, user, creationDate);
+                    loc, contact, type, start, end, csr, user, createdBy, creationDate);
 
         } catch (Exception e) {
             System.out.println(e);
@@ -623,7 +615,7 @@ public class AppointmentHelpers {
      */
     private void addAppointment(String currentUser, String apptID, String title, String desc,
                                 String loc, String contact, String type, String start, String end,
-                                String csr, String user, String creationDate) {
+                                String csr, String user, String createdBy, String creationDate) {
         try {
             //Create the query
             String query = "INSERT INTO appointments "
@@ -641,7 +633,7 @@ public class AppointmentHelpers {
             stmt.setString(6, start);
             stmt.setString(7, end);
             stmt.setString(8, creationDate);
-            stmt.setString(9, currentUser);
+            stmt.setString(9, createdBy);
             stmt.setString(10, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             stmt.setString(11, currentUser);
             stmt.setString(12, csr);
