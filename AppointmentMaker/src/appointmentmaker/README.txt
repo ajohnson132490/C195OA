@@ -1,17 +1,15 @@
 TO DO LIST
 
 Customers
-•  create add customer page
 •  create modify customer page
 •  make delete customer button work
-•  make input verification functions
 
 Reports
 •  make the reports
 •  design a new report
 
 Other
-•  Translate everything into french
+•  Translate log in page into french
 •  make language location dependent and find a way to test it
 •  do javadoc comments
 
