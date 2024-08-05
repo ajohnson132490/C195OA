@@ -22,10 +22,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
@@ -109,7 +110,7 @@ public class AppointmentMaker extends Application {
                 //Check if the password entered matches the username
                 if (rs.next() && rs.getString("Password").equals(pField.getText())) {
                     currentUser = uField.getText();
-                    viewAppointments(primaryStage);
+                    viewCustomers(primaryStage);
                 } else {
                     System.out.println("Username or password is incorrect");
                 }
@@ -134,7 +135,7 @@ public class AppointmentMaker extends Application {
                         //Check if the password entered matches the username
                         if (rs.next() && rs.getString("Password").equals(pField.getText())) {
                             currentUser = uField.getText();
-                            viewAppointments(primaryStage);
+                            viewCustomers(primaryStage);
                         } else {
                             System.out.println("Username or password is incorrect");
                         }
@@ -204,10 +205,10 @@ public class AppointmentMaker extends Application {
         VBox tableVBox = new VBox(5);
         
         //All Customers TableView Table
-        TableView customersTable = new TableView();
+        TableView<ObservableList> customersTable = new TableView();
                 customersTable.setPrefWidth(1200);
 
-        ObservableList<ObservableList> csrData = FXCollections.observableArrayList();
+        AtomicReference<ObservableList<ObservableList>> csrData = new AtomicReference<>(FXCollections.observableArrayList());
         try {
             //Connect to the database
             conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
@@ -236,6 +237,7 @@ public class AppointmentMaker extends Application {
             }
             
             //Populate the customers data into the data ObservableList
+            ObservableList<ObservableList> rowCollection = FXCollections.observableArrayList();
             while(rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
@@ -249,11 +251,12 @@ public class AppointmentMaker extends Application {
                     }
                 }
                 //Add the full row to the observableList
-                csrData.add(row);
+                rowCollection.add(row);
             }
             
             //Populate table with customer data
-            customersTable.setItems(csrData);   
+            csrData.set(rowCollection);
+            customersTable.setItems(csrData.get());
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -267,19 +270,30 @@ public class AppointmentMaker extends Application {
         //Create the buttons
         Button addBtn = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
-            //todo: create add form
+            addCustomer(primaryStage);
         };
         addBtn.setOnAction(addEvent);
         
         Button updateBtn = new Button("Update");
         EventHandler<ActionEvent> updateEvent = (ActionEvent e) -> {
-            //todo: create update form
+            //Get the customer ID from the currently selected item and pass it along to the updateCustomer function
+            try {
+                updateCustomers(primaryStage, Integer.parseInt(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0))));
+            } catch (Exception ex) {
+                System.out.println("No Customer selected");
+            }
         };
         updateBtn.setOnAction(updateEvent);
         
         Button deleteBtn = new Button("Delete");
         EventHandler<ActionEvent> deleteEvent = (ActionEvent e) -> {
-            //todo: figure out how to delete items and refresh the tableview
+            //Get the appointment ID from the currently selected item and delete the item then refresh the page
+            try {
+                //g.deleteCustomer(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0)));
+                viewAppointments(primaryStage);
+            } catch (Exception ex) {
+                System.out.println("No appointment selected");
+            }
         };
         deleteBtn.setOnAction(deleteEvent);
         
@@ -317,7 +331,134 @@ public class AppointmentMaker extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-    
+
+    public void addCustomer(Stage primaryStage) {
+        //Create the main vbox
+        VBox mainVBox = new VBox(20);
+
+        //Add all items to the root
+        Pane root = new Pane();
+        root.getChildren().add(mainVBox);
+        mainVBox.getStyleClass().add("mainPage");
+
+        //Create Scene
+        Scene scene = new Scene(root, 525, 610);
+        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+
+        //Create title HBox
+        HBox upper = new HBox();
+        upper.setAlignment(Pos.TOP_LEFT);
+        Label mTitle = new Label("Add a Customer");
+        mTitle.setStyle("-fx-font: 24 ariel;");
+        upper.getChildren().add(mTitle);
+        mainVBox.getChildren().add(upper);
+
+        //Creating tableview VBox
+        GridPane form = new GridPane();
+        form.setVgap(25);
+        form.setHgap(5);
+
+        //Creating some string arrays for the combo boxes
+        String countries[] = {"U.S.", "Canada", "UK"};
+        String states[] = { "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
+                "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+                "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+                "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+                "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", };
+        String provinences[] = {"Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrado", "Northwest Territories", "Nova Scotia",
+                "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon"};
+        String constituents[] = {"England", "Northern Ireland", "Scotland", "Wales"};
+
+        //Creating all Labels
+        Label id = new Label("ID");
+        Label name = new Label("Name");
+        Label country = new Label("Country");
+        Label district = new Label("District");
+        Label address = new Label("Address");
+        Label postalCode = new Label("Postal Code");
+        Label phone = new Label("Phone Number");
+
+        //Creating all fields
+        TextField idField = new TextField(Integer.toString(g.getNextCsrId()));
+        idField.setDisable(true);
+        TextField nameField = new TextField();
+        nameField.setPromptText("What is the customer's name");
+        TextField addressField = new TextField();
+        addressField.setPromptText("What is their address");
+        TextField postalCodeField = new TextField();
+        postalCodeField.setPromptText("What is their postal code");
+        TextField phoneField = new TextField();
+        phoneField.setPromptText("What their phone number");
+        ComboBox countriesComboBox = new ComboBox(FXCollections.observableArrayList(countries));
+        countriesComboBox.setPromptText("Country");
+        ComboBox districtComboBox = new ComboBox();
+        districtComboBox.setPromptText("District");
+
+        //Update the districts based on the selected country
+        EventHandler<ActionEvent> updateDistricts = (ActionEvent e) -> {
+            switch (countriesComboBox.getValue().toString()) {
+                case "U.S.":
+                    districtComboBox.setItems(FXCollections.observableArrayList(states));
+                    break;
+                case "Canada":
+                    districtComboBox.setItems(FXCollections.observableArrayList(provinences));
+                    break;
+                case "UK":
+                    districtComboBox.setItems(FXCollections.observableArrayList(constituents));
+                    break;
+            }
+        };
+        countriesComboBox.setOnAction(updateDistricts);
+
+        //Create the buttons
+        Button add = new Button("Add");
+        EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+            g.addCustomer(idField.getText(), nameField.getText(), districtComboBox.getValue().toString(),
+                    addressField.getText(), postalCodeField.getText(), phoneField.getText(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                   currentUser, currentUser);
+            viewCustomers(primaryStage);
+        };
+        add.setOnAction(addEvent);
+
+        Button cancel = new Button("Cancel");
+        EventHandler<ActionEvent> cancelEvent = (ActionEvent e) -> {
+            viewCustomers(primaryStage);
+        };
+        cancel.setOnAction(cancelEvent);
+
+        //Add it all to the form
+        form.add(id, 0, 0);
+        form.add(idField, 1, 0);
+        form.add(name, 0, 1);
+        form.add(nameField, 1, 1);
+        form.add(country, 0, 2);
+        form.add(countriesComboBox, 1, 2);
+        form.add(district, 0, 3);
+        form.add(districtComboBox, 1, 3);
+        form.add(address, 0, 4);
+        form.add(addressField, 1, 4);
+        form.add(postalCode, 0, 5);
+        form.add(postalCodeField, 1, 5);
+        form.add(phone, 0, 6);
+        form.add(phoneField, 1, 6);
+
+        HBox buttons = new HBox(10);
+        buttons.setPadding(new Insets(0, 0, 0, 50));
+
+        buttons.getChildren().addAll(add, cancel);
+        form.add(buttons, 3, 10);
+
+        //Add the form to the mainVBox
+        mainVBox.getChildren().add(form);
+
+        primaryStage.setTitle("Add Customer");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+    public void updateCustomers(Stage primaryStage, int customerID) {
+
+    }
+
     public void viewAppointments(Stage primaryStage) {
         //Create the main VBox
         VBox mainVBox = new VBox(15);
@@ -617,7 +758,7 @@ public class AppointmentMaker extends Application {
         //Add the form to the mainVBox
         mainVBox.getChildren().add(form);
         
-        primaryStage.setTitle("View Appointments");
+        primaryStage.setTitle("Add Appointment");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -722,7 +863,7 @@ public class AppointmentMaker extends Application {
                     descField.getText(), locField.getText(), contactField.getValue().toString(),
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
-                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), oldAppt[7])) {
+                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), oldAppt[8], oldAppt[7])) {
                 viewAppointments(primaryStage);
             } else {
                 System.out.println("Error validating appointment data. Please recheck all values.");
@@ -778,7 +919,7 @@ public class AppointmentMaker extends Application {
         //Add the form to the mainVBox
         mainVBox.getChildren().add(form);
 
-        primaryStage.setTitle("View Appointments");
+        primaryStage.setTitle("Update Appointment");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
