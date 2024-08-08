@@ -280,7 +280,7 @@ public class AppointmentMaker extends Application {
             try {
                 updateCustomers(primaryStage, Integer.parseInt(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0))));
             } catch (Exception ex) {
-                System.out.println("No Customer selected");
+                System.out.println("No Customer selected\n" + ex);
             }
         };
         updateBtn.setOnAction(updateEvent);
@@ -289,8 +289,8 @@ public class AppointmentMaker extends Application {
         EventHandler<ActionEvent> deleteEvent = (ActionEvent e) -> {
             //Get the appointment ID from the currently selected item and delete the item then refresh the page
             try {
-                //g.deleteCustomer(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0)));
-                viewAppointments(primaryStage);
+                g.deleteCustomer(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0)));
+                viewCustomers(primaryStage);
             } catch (Exception ex) {
                 System.out.println("No appointment selected");
             }
@@ -359,7 +359,7 @@ public class AppointmentMaker extends Application {
         form.setHgap(5);
 
         //Creating some string arrays for the combo boxes
-        String countries[] = {"U.S.", "Canada", "UK"};
+        String countries[] = {"U.S", "Canada", "UK"};
         String states[] = { "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
                 "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
                 "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
@@ -373,7 +373,7 @@ public class AppointmentMaker extends Application {
         Label id = new Label("ID");
         Label name = new Label("Name");
         Label country = new Label("Country");
-        Label district = new Label("District");
+        Label division = new Label("division");
         Label address = new Label("Address");
         Label postalCode = new Label("Postal Code");
         Label phone = new Label("Phone Number");
@@ -391,29 +391,29 @@ public class AppointmentMaker extends Application {
         phoneField.setPromptText("What their phone number");
         ComboBox countriesComboBox = new ComboBox(FXCollections.observableArrayList(countries));
         countriesComboBox.setPromptText("Country");
-        ComboBox districtComboBox = new ComboBox();
-        districtComboBox.setPromptText("District");
+        ComboBox divisionComboBox = new ComboBox();
+        divisionComboBox.setPromptText("Division");
 
-        //Update the districts based on the selected country
-        EventHandler<ActionEvent> updateDistricts = (ActionEvent e) -> {
+        //Update the divisions based on the selected country
+        EventHandler<ActionEvent> updatedivisions = (ActionEvent e) -> {
             switch (countriesComboBox.getValue().toString()) {
-                case "U.S.":
-                    districtComboBox.setItems(FXCollections.observableArrayList(states));
+                case "U.S":
+                    divisionComboBox.setItems(FXCollections.observableArrayList(states));
                     break;
                 case "Canada":
-                    districtComboBox.setItems(FXCollections.observableArrayList(provinences));
+                    divisionComboBox.setItems(FXCollections.observableArrayList(provinences));
                     break;
                 case "UK":
-                    districtComboBox.setItems(FXCollections.observableArrayList(constituents));
+                    divisionComboBox.setItems(FXCollections.observableArrayList(constituents));
                     break;
             }
         };
-        countriesComboBox.setOnAction(updateDistricts);
+        countriesComboBox.setOnAction(updatedivisions);
 
         //Create the buttons
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
-            g.addCustomer(idField.getText(), nameField.getText(), districtComboBox.getValue().toString(),
+            g.addCustomer(idField.getText(), nameField.getText(), divisionComboBox.getValue().toString(),
                     addressField.getText(), postalCodeField.getText(), phoneField.getText(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
                    currentUser, currentUser);
             viewCustomers(primaryStage);
@@ -433,8 +433,8 @@ public class AppointmentMaker extends Application {
         form.add(nameField, 1, 1);
         form.add(country, 0, 2);
         form.add(countriesComboBox, 1, 2);
-        form.add(district, 0, 3);
-        form.add(districtComboBox, 1, 3);
+        form.add(division, 0, 3);
+        form.add(divisionComboBox, 1, 3);
         form.add(address, 0, 4);
         form.add(addressField, 1, 4);
         form.add(postalCode, 0, 5);
@@ -456,7 +456,145 @@ public class AppointmentMaker extends Application {
         primaryStage.show();
     }
     public void updateCustomers(Stage primaryStage, int customerID) {
+        //Get the current appointment
+        ObservableList<String> curCsr;
+        curCsr = g.getCustomer(customerID);
+        String tmp = curCsr.toString().substring(1, curCsr.toString().length()-1);
+        String[] oldCsr = tmp.split(", ");
 
+        //Create the main vbox
+        VBox mainVBox = new VBox(20);
+
+        //Add all items to the root
+        Pane root = new Pane();
+        root.getChildren().add(mainVBox);
+        mainVBox.getStyleClass().add("mainPage");
+
+        //Create Scene
+        Scene scene = new Scene(root, 525, 610);
+        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+
+        //Create title HBox
+        HBox upper = new HBox();
+        upper.setAlignment(Pos.TOP_LEFT);
+        Label mTitle = new Label("Add a Customer");
+        mTitle.setStyle("-fx-font: 24 ariel;");
+        upper.getChildren().add(mTitle);
+        mainVBox.getChildren().add(upper);
+
+        //Creating tableview VBox
+        GridPane form = new GridPane();
+        form.setVgap(25);
+        form.setHgap(5);
+
+        //Creating some string arrays for the combo boxes
+        String countries[] = {"U.S", "Canada", "UK"};
+        String states[] = { "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
+                "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+                "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+                "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+                "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", };
+        String provinences[] = {"Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrado", "Northwest Territories", "Nova Scotia",
+                "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon"};
+        String constituents[] = {"England", "Northern Ireland", "Scotland", "Wales"};
+
+        //Creating all Labels
+        Label id = new Label("ID");
+        Label name = new Label("Name");
+        Label country = new Label("Country");
+        Label division = new Label("Division");
+        Label address = new Label("Address");
+        Label postalCode = new Label("Postal Code");
+        Label phone = new Label("Phone Number");
+
+        //Creating all fields
+        TextField idField = new TextField(oldCsr[0]);
+        idField.setDisable(true);
+        TextField nameField = new TextField(oldCsr[1]);
+        TextField addressField = new TextField(oldCsr[2]);
+        TextField postalCodeField = new TextField(oldCsr[3]);
+        TextField phoneField = new TextField(oldCsr[4]);
+
+        //Add the current country and division to the comboboxes
+        ComboBox countriesComboBox = new ComboBox(FXCollections.observableArrayList(countries));
+        countriesComboBox.setValue(g.getCountry(oldCsr[9]));
+        ComboBox divisionComboBox = new ComboBox();
+        divisionComboBox.setValue(g.getDivision(oldCsr[9]));
+
+        //Manually preload the divisions
+        switch (countriesComboBox.getValue().toString()) {
+            case "U.S":
+                divisionComboBox.setItems(FXCollections.observableArrayList(states));
+                break;
+            case "Canada":
+                divisionComboBox.setItems(FXCollections.observableArrayList(provinences));
+                break;
+            case "UK":
+                divisionComboBox.setItems(FXCollections.observableArrayList(constituents));
+                break;
+        }
+
+        //Update the divisions based on the selected country
+        EventHandler<ActionEvent> updatedivisions = (ActionEvent e) -> {
+            switch (countriesComboBox.getValue().toString()) {
+                case "U.S":
+                    divisionComboBox.setItems(FXCollections.observableArrayList(states));
+                    break;
+                case "Canada":
+                    divisionComboBox.setItems(FXCollections.observableArrayList(provinences));
+                    break;
+                case "UK":
+                    divisionComboBox.setItems(FXCollections.observableArrayList(constituents));
+                    break;
+            }
+        };
+        countriesComboBox.setOnAction(updatedivisions);
+
+        //Create the buttons
+        Button add = new Button("Add");
+        EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+            g.deleteCustomer(idField.getText());
+            g.addCustomer(idField.getText(), nameField.getText(), divisionComboBox.getValue().toString(),
+                    addressField.getText(), postalCodeField.getText(), phoneField.getText(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                    currentUser, currentUser);
+            viewCustomers(primaryStage);
+        };
+        add.setOnAction(addEvent);
+
+        Button cancel = new Button("Cancel");
+        EventHandler<ActionEvent> cancelEvent = (ActionEvent e) -> {
+            viewCustomers(primaryStage);
+        };
+        cancel.setOnAction(cancelEvent);
+
+        //Add it all to the form
+        form.add(id, 0, 0);
+        form.add(idField, 1, 0);
+        form.add(name, 0, 1);
+        form.add(nameField, 1, 1);
+        form.add(country, 0, 2);
+        form.add(countriesComboBox, 1, 2);
+        form.add(division, 0, 3);
+        form.add(divisionComboBox, 1, 3);
+        form.add(address, 0, 4);
+        form.add(addressField, 1, 4);
+        form.add(postalCode, 0, 5);
+        form.add(postalCodeField, 1, 5);
+        form.add(phone, 0, 6);
+        form.add(phoneField, 1, 6);
+
+        HBox buttons = new HBox(10);
+        buttons.setPadding(new Insets(0, 0, 0, 50));
+
+        buttons.getChildren().addAll(add, cancel);
+        form.add(buttons, 3, 10);
+
+        //Add the form to the mainVBox
+        mainVBox.getChildren().add(form);
+
+        primaryStage.setTitle("Add Customer");
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 
     public void viewAppointments(Stage primaryStage) {
