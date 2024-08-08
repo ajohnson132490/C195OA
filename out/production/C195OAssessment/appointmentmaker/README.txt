@@ -1,11 +1,6 @@
 TO DO LIST
-
 Customers
-•  create add customer page
-    - Get necessary input fields and labels
-•  create modify customer page
-•  make delete customer button work
-•  make input verification functions
+•  popup window on deletion
 
 Reports
 •  make the reports
