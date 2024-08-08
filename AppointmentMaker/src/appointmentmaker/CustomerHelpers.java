@@ -1,5 +1,8 @@
 package appointmentmaker;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,16 +27,16 @@ public class CustomerHelpers {
 
             //Find the country name
             String query = "SELECT Country FROM countries WHERE Country_ID = "
-                    + "(SELECT Country_ID FROM first_level_divisions WHERE Division_ID = "
-                    + "(SELECT Division_ID from customers WHERE Address = ?))";
+                    + "(SELECT Country_ID FROM first_level_divisions WHERE division_ID = "
+                    + "(SELECT division_ID from customers WHERE Address = ?))";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, address);
             ResultSet rs = stmt.executeQuery();
             rs.next();
 
             //Find the first level division
-            String query2 = "SELECT Division FROM first_level_divisions WHERE Division_ID = "
-                    + "(SELECT Division_ID from customers WHERE Address = ?)";
+            String query2 = "SELECT division FROM first_level_divisions WHERE division_ID = "
+                    + "(SELECT division_ID from customers WHERE Address = ?)";
             PreparedStatement stmt2 = conn.prepareStatement(query2);
             stmt2.setString(1, address);
             ResultSet rs2 = stmt2.executeQuery();
@@ -41,14 +44,67 @@ public class CustomerHelpers {
 
             //return country name
             if (rs.getString("Country").equals("Canada")) {
-                return "Canadian address: " + address + ", " + rs2.getString("Division");
+                return "Canadian address: " + address + ", " + rs2.getString("division");
             }
-            return rs.getString("Country") + " address: " + address + ", " + rs2.getString("Division");
+            return rs.getString("Country") + " address: " + address + ", " + rs2.getString("division");
 
         } catch (Exception e) {
             System.out.println(e);
             return null;
         }
+    }
+
+    public String getCountry(String divisionID) {
+        try {
+            //Find the country name
+            String query = "SELECT Country FROM countries WHERE Country_ID = "
+            + "(SELECT Country_ID FROM first_level_divisions WHERE Division_ID = ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, divisionID);
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+
+            //return country name
+            return rs.getString("Country");
+
+        } catch (Exception e) {
+            System.out.println("getCountry: " + e);
+            return "";
+        }
+    }
+
+    public String getDivision(String divisionID) {
+        try {
+            //Find the country name
+            String query = "SELECT Division FROM first_level_divisions WHERE Division_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, divisionID);
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+
+            //return country name
+            return rs.getString("Division");
+
+        } catch (Exception e) {
+            System.out.println("getDivision: " + e);
+            return "";
+        }
+    }
+
+    private String getDivisionId(String division) {
+        try {
+            String query = "SELECT Division_ID FROM first_level_divisions WHERE Division = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, division);
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+
+            return rs.getString("Division_ID");
+        } catch (Exception e) {
+            System.out.println("getdivisionID: " + e);
+        }
+
+        return "";
     }
 
     /**
@@ -73,20 +129,34 @@ public class CustomerHelpers {
         return -1;
     }
 
-    private String getDivisionId(String district) {
+    /**
+     * Finds a contact's ID given the name.
+     *
+     * @param contact the name of the contact
+     * @return the contact's ID
+     */
+    public ObservableList<String> getCustomer(int id) {
         try {
-            String query = "SELECT Division_ID FROM first_level_divisions WHERE Division = ?";
+            String query = "SELECT * FROM customers WHERE Customer_ID = ? ";
             PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, district);
+            stmt.setString(1, String.valueOf(id));
             ResultSet rs = stmt.executeQuery();
-            rs.next();
 
-            return rs.getString("Division_ID");
+            //Populate the customers data into the data ObservableList
+            while(rs.next()) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    //Add the data to a row
+                    row.add(rs.getString(i));
+                }
+
+                //Add the full row to the appointment
+                return row;
+            }
         } catch (Exception e) {
-            System.out.println("getDivisionID: " + e);
-        }
+            System.out.println("getCustomer: " + e);        }
 
-        return "";
+        return null;
     }
 
     /**
@@ -107,7 +177,7 @@ public class CustomerHelpers {
      * @param user the user meeting with the customer
      * @param creationDate the date the appointment was originally created
      */
-    public void addCustomer(String csrID, String name, String district, String address,
+    public void addCustomer(String csrID, String name, String division, String address,
                              String postalCode, String phone, String creationDate, String createdBy, String currentUser) {
         try {
             //Create the query
@@ -127,12 +197,32 @@ public class CustomerHelpers {
             stmt.setString(7, createdBy);
             stmt.setString(8, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             stmt.setString(9, currentUser);
-            stmt.setString(10, getDivisionId(district));
+            stmt.setString(10, getDivisionId(division));
 
             //Execute
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e);
+        }
+    }
+
+    public void deleteCustomer(String id) {
+        try {
+            //Delete associated appointments first
+            String query = "DELETE FROM appointments WHERE Customer_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, id);
+            stmt.executeUpdate();
+
+            //Delete csr
+            query = "DELETE FROM customers WHERE Customer_ID = ?";
+            stmt = conn.prepareStatement(query);
+            stmt.setString(1, id);
+            stmt.executeUpdate();
+
+
+        } catch (Exception e) {
+            System.out.println("deleteCustomer: " + e);
         }
     }
 }
