@@ -3,6 +3,7 @@ package appointmentmaker;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.DatePicker;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,9 +11,11 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -87,10 +90,10 @@ public class AppointmentHelpers {
         } catch (ParseException ex) {
             java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         DateFormat localFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         localFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
-        
+
         return localFormat.format(date);
     }
 
@@ -102,20 +105,65 @@ public class AppointmentHelpers {
      * @return the time in UTC timezone
      */
     public String convertTimeToUTC(String loc) {
-        //Get my utc time into a DateFormat
-        DateFormat localFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        localFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
-        java.util.Date date = null;
-        try {
-            date = localFormat.parse(loc);
-        } catch (ParseException e) {
-            System.out.println("convertTimeToUTC: " + e);
+        //Get Time Zone Offset from UTC (which is always 0)
+        String curTZ = ZoneId.of(ZoneId.systemDefault().toString()).getRules().getOffset(Instant.now()).toString();
+
+        //Convert the offset to an int
+        String[] splt = curTZ.split(":");
+        splt = curTZ.split(":");
+        int dif = -(Integer.parseInt(splt[0]));
+        System.out.println("Dif: " + dif);
+
+        //Grab the current hour from the local time loc
+        int curHour = Integer.parseInt(loc.substring(11,13));
+        curHour += dif;
+        String newHour = "";
+
+        //Update the hour manually
+        if (curHour < 10) {
+            newHour = "0" + curHour;
+        } else {
+            newHour = String.valueOf(curHour);
         }
-        
-        DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        
-        return utcFormat.format(date);
+
+        //Update the local time string
+        String beg = loc.substring(0, 11);
+        String end = loc.substring(13);
+        loc = beg + newHour + end;
+
+        return loc;
+    }
+
+    public String convertTimeToEST(String time, String timezone) {
+        String estTZ = ZoneId.of("America/New_York").getRules().getOffset(Instant.now()).toString();
+        String curTZ;
+
+        if (timezone.equals("LOCAL")) {
+            curTZ = ZoneId.of(ZoneId.systemDefault().toString()).getRules().getOffset(Instant.now()).toString();
+        } else {
+            curTZ = "0";
+        }
+        String[] splt = estTZ.split(":");
+        int est = -(Integer.parseInt(splt[0]));
+        splt = curTZ.split(":");
+        int cur = -(Integer.parseInt(splt[0]));
+        int dif = cur - est;
+
+        int curHour = Integer.parseInt(time.substring(11,13));
+        curHour += dif;
+        String newHour = "";
+
+        if (curHour < 10) {
+            newHour = "0" + curHour;
+        } else {
+            newHour = String.valueOf(curHour);
+        }
+
+        String beg = time.substring(0, 11);
+        String end = time.substring(13);
+        time = beg + newHour + end;
+
+        return time;
     }
 
     /**
@@ -152,8 +200,10 @@ public class AppointmentHelpers {
                             //Add the data to a row
                             if (rs.getMetaData().getColumnName(i).equals("Start") ||
                                     rs.getMetaData().getColumnName(i).equals("End") ||
-                                    rs.getMetaData().getColumnName(i).equals("Last_Update")) {
-                                row.add(convertTimeToLocal(rs.getString(i)));
+                                    rs.getMetaData().getColumnName(i).equals("Last_Update") ||
+                                    rs.getMetaData().getColumnName(i).equals("Create_Date")) {
+                                String s = rs.getString(i);
+                                row.add(convertTimeToLocal(s));
                             } else {
                                 row.add(rs.getString(i));
                             }
@@ -166,7 +216,7 @@ public class AppointmentHelpers {
                 }
             }
         } catch (Exception e) {
-            System.out.println("getAppoointments: " + e);
+            System.out.println("getAppointments: " + e);
         }
         
         return csrData;
@@ -192,14 +242,22 @@ public class AppointmentHelpers {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     //Add the data to a row
-                    row.add(rs.getString(i));
+                    if (rs.getMetaData().getColumnName(i).equals("Start") ||
+                            rs.getMetaData().getColumnName(i).equals("End") ||
+                            rs.getMetaData().getColumnName(i).equals("Last_Update") ||
+                            rs.getMetaData().getColumnName(i).equals("Create_Date")) {
+                        row.add(convertTimeToLocal(rs.getString(i)));
+                    } else {
+                        row.add(rs.getString(i));
+                    }
                 }
 
                 //Add the full row to the appointment
                 return row;
             }
         } catch (Exception e) {
-            System.out.println("getAppoointments: " + e);        }
+            System.out.println("getAppointment: " + e);
+        }
 
         return null;
     }
@@ -220,7 +278,7 @@ public class AppointmentHelpers {
             return rs.getInt(1) + 1;
             
          } catch (Exception e) {
-             System.out.println(e);
+             System.out.println("getNextApptID: " + e);
          }
          
          return -1;
@@ -244,7 +302,7 @@ public class AppointmentHelpers {
             return contacts;
             
          } catch (Exception e) {
-             System.out.println(e);
+             System.out.println("getAllContats: " + e);
          }
          
          return null;
@@ -268,7 +326,7 @@ public class AppointmentHelpers {
                 return String.valueOf(rs.getInt(1));
             }
         } catch (SQLException e) {
-            System.out.println(e);
+            System.out.println("getContact: " + e);
             return "Error querying the database for the CONTACT";
         }
         return "Selected CONTACT does not exist";
@@ -292,7 +350,7 @@ public class AppointmentHelpers {
                 return rs.getString(1);
             }
         } catch (SQLException e) {
-            System.out.println(e);
+            System.out.println("getContact: " + e);
             return "Error querying the database for the CONTACT";
         }
         return "Selected CONTACT does not exist";
@@ -351,7 +409,7 @@ public class AppointmentHelpers {
                 System.out.println("Selected CUSTOMER does not exist");
                 return false;
             }
-            
+
             //Create all variables to check date and time
             LocalDate startDate = sDate.getValue();
             LocalDate endDate = eDate.getValue();
@@ -361,18 +419,20 @@ public class AppointmentHelpers {
             //Get my start and end time into date format for comparison
             DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             try {
-                startTime = formatter.parse(convertTimeToUTC(startDate.toString() + " " + sTHour + ":" + sTMinute + ":00"));
-                endTime = formatter.parse(convertTimeToUTC(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00"));
+                startTime = formatter.parse(startDate.toString() + " " + sTHour + ":" + sTMinute + ":00");
+                endTime = formatter.parse(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00");
+                if (!duringOfficeHours(formatter.format(startTime),
+                        formatter.format(endTime))) {
+                    System.out.println("Appointment not during business hours");
+                    return false;
+                }
+                startTime = formatter.parse(convertTimeToUTC(formatter.format(startTime)));
+                endTime = formatter.parse(convertTimeToUTC(formatter.format(endTime)));
             } catch (ParseException ex) {
                 System.out.println("validateAppointment: " + ex);
                 return false;
             }
-            
-            //Check if appointment starts before it ends, and if its within office hours
-            if (!duringOfficeHours(eTHour, eTMinute)) {
-                System.out.println("Appointment must end by 22:00 ET");
-                return false;
-            }
+
             if (startDate.compareTo(endDate) > 0) {
                 System.out.println("Start date must be before end date.");
                 return false;
@@ -408,7 +468,7 @@ public class AppointmentHelpers {
             loc, contact, type, start, end, csr, user);
             
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("validateAppointment: " + e);
             return false;
         }
         return true;
@@ -482,18 +542,20 @@ public class AppointmentHelpers {
             //Get my start and end time into date format for comparison
             DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             try {
-                startTime = formatter.parse(convertTimeToUTC(startDate.toString() + " " + sTHour + ":" + sTMinute + ":00"));
-                endTime = formatter.parse(convertTimeToUTC(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00"));
+                startTime = formatter.parse(startDate.toString() + " " + sTHour + ":" + sTMinute + ":00");
+                endTime = formatter.parse(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00");
+                if (!duringOfficeHours(formatter.format(startTime),
+                        formatter.format(endTime))) {
+                    System.out.println("Appointment not during business hours");
+                    return false;
+                }
+                startTime = formatter.parse(convertTimeToUTC(formatter.format(startTime)));
+                endTime = formatter.parse(convertTimeToUTC(formatter.format(endTime)));
             } catch (ParseException ex) {
                 System.out.println("validateAppointment: " + ex);
                 return false;
             }
 
-            //Check if appointment starts before it ends, and if its within office hours
-            if (!duringOfficeHours(eTHour, eTMinute)) {
-                System.out.println("Appointment must end by 22:00 ET");
-                return false;
-            }
             if (startDate.compareTo(endDate) > 0) {
                 System.out.println("Start date must be before end date.");
                 return false;
@@ -529,7 +591,7 @@ public class AppointmentHelpers {
                     loc, contact, type, start, end, csr, user, createdBy, creationDate);
 
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("validateAppointment: " + e);
             return false;
         }
         return true;
@@ -538,12 +600,23 @@ public class AppointmentHelpers {
     /**
      * Checks if the appointment ends by the end of the day.
      *
-     * @param eTHour the hour the appointment ends
-     * @param eTMinute the minute the appointment ends
      * @return returns true if the appointment is during office hours, and false if the appointment goes past the end of the day
      */
-    public boolean duringOfficeHours(String eTHour, String eTMinute) {
-        return !(eTHour.equals("22") && !eTMinute.equals("00"));
+    public boolean duringOfficeHours(String startTime, String endTime) {
+        //Convert times from local to est
+        startTime = convertTimeToEST(startTime, "LOCAL");
+        endTime = convertTimeToEST(endTime, "LOCAL");
+
+        //Format times into a localdatetime object for comparing
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime start = LocalDateTime.parse(startTime, formatter);
+        LocalDateTime end = LocalDateTime.parse(endTime, formatter);
+
+        if (start.getHour() < 8 || end.getHour() > 22 || (end.getHour() == 22 && end.getMinute() > 0)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -591,7 +664,7 @@ public class AppointmentHelpers {
                 //Execute
                 stmt.executeUpdate();
         } catch (SQLException e) {
-            System.out.println(e);
+            System.out.println("addAppointment: " + e);
         }
     }
 
@@ -643,7 +716,7 @@ public class AppointmentHelpers {
             //Execute
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.out.println(e);
+            System.out.println("addAppointment: " + e);
         }
     }
 

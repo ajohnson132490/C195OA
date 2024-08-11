@@ -115,7 +115,7 @@ public class AppointmentMaker extends Application {
                     System.out.println("Username or password is incorrect");
                 }
             } catch (Exception e) {
-                System.out.println(e);
+                System.out.println("Log In attempt: " + e);
             }
         });
         scene.setOnKeyPressed(event -> {
@@ -140,7 +140,7 @@ public class AppointmentMaker extends Application {
                             System.out.println("Username or password is incorrect");
                         }
                     } catch (Exception e) {
-                        System.out.println(e);
+                        System.out.println("Log in attempt: " + e);
                     }
             }
         });
@@ -258,7 +258,7 @@ public class AppointmentMaker extends Application {
             csrData.set(rowCollection);
             customersTable.setItems(csrData.get());
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Populating the table in ViewCustomer: " + e);
         }
         
         tableVBox.getChildren().add(customersTable);
@@ -664,14 +664,13 @@ public class AppointmentMaker extends Application {
             week.setOnAction( e -> {
                 csrData.set(h.getAppointments('w'));
                 appointmentsTable.setItems(csrData.get());
-
                 appointmentsTable.refresh();
             });
             month.setOnAction( e -> {
                 if (month.isSelected()) {
                     csrData.set(h.getAppointments('m'));
-                    appointmentsTable.getItems().clear();
                     appointmentsTable.setItems(csrData.get());
+                    appointmentsTable.refresh();
                 }
             });
 
@@ -679,7 +678,7 @@ public class AppointmentMaker extends Application {
             csrData.set(h.getAppointments('w'));
             appointmentsTable.setItems(csrData.get());
         } catch (SQLException e) {
-            System.out.println(e);
+            System.out.println("Populating the table in viewAppiontments: " + e);
         }
         
         tableVBox.getChildren().add(appointmentsTable);
@@ -701,7 +700,7 @@ public class AppointmentMaker extends Application {
             try {
                 updateAppointments(primaryStage, Integer.parseInt(String.valueOf(appointmentsTable.getSelectionModel().getSelectedItem().get(0))));
             } catch (Exception ex) {
-                System.out.println("No appointment selected");
+                System.out.println("No appointment selected" + ex);
             }
         };
         updateBtn.setOnAction(updateEvent);
@@ -779,8 +778,8 @@ public class AppointmentMaker extends Application {
         form.setHgap(5);
         
         //Creating some string arrays for the combo boxes
-        String hours[] = {"8", "9", "10", "11", "12", "13", "14", "15", "16",
-            "17", "18", "19", "20", "21", "22"};
+        String hours[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
+            "17", "18", "19", "20", "21", "22", "23", "24"};
         String minutes[] = {"00", "01", "02", "03", "04", "05", "06", "07", "08",
             "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
             "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
@@ -934,8 +933,8 @@ public class AppointmentMaker extends Application {
         form.setHgap(5);
 
         //Creating some string arrays for the combo boxes
-        String hours[] = {"8", "9", "10", "11", "12", "13", "14", "15", "16",
-                "17", "18", "19", "20", "21", "22"};
+        String hours[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
+                "17", "18", "19", "20", "21", "22", "23", "24"};
         String minutes[] = {"00", "01", "02", "03", "04", "05", "06", "07", "08",
                 "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
                 "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
@@ -974,8 +973,7 @@ public class AppointmentMaker extends Application {
         sDateField.setValue(oldSDate);
         start = start[1].split(":");
         ComboBox sTHour = new ComboBox(FXCollections.observableArrayList(hours));
-        //Double check that the - 6 makes sense even if you're in french mode
-        sTHour.setValue(String.valueOf(Integer.parseInt(start[0]) - 6));
+        sTHour.setValue(String.valueOf(Integer.parseInt(start[0])));
         ComboBox sTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
         sTMinute.setValue(start[1]);
 
@@ -985,7 +983,7 @@ public class AppointmentMaker extends Application {
         eDateField.setValue(oldEDate);
         end = end[1].split(":");
         ComboBox eTHour = new ComboBox(FXCollections.observableArrayList(hours));
-        eTHour.setValue(String.valueOf(Integer.parseInt(end[0]) - 6));
+        eTHour.setValue(String.valueOf(Integer.parseInt(end[0])));
         ComboBox eTMinute = new ComboBox(FXCollections.observableArrayList(minutes));
         eTMinute.setValue(end[1]);
 

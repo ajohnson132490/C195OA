@@ -1,6 +1,5 @@
 TO DO LIST
 Appointments
-•  make sure times on the viewAppointments page are translated into local time
 
 Customers
 •  popup window on deletion
