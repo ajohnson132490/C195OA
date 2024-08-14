@@ -20,8 +20,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -289,8 +292,26 @@ public class AppointmentMaker extends Application {
         EventHandler<ActionEvent> deleteEvent = (ActionEvent e) -> {
             //Get the appointment ID from the currently selected item and delete the item then refresh the page
             try {
-                g.deleteCustomer(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0)));
-                viewCustomers(primaryStage);
+                final Stage dialog = new Stage();
+                dialog.initModality(Modality.APPLICATION_MODAL);
+                dialog.initOwner(primaryStage);
+                VBox dialogVbox = new VBox(20);
+                Button okBtn = new Button("Ok");
+                dialogVbox.getChildren().add(new Text("Customer has been deleted."));
+                dialogVbox.getChildren().add(okBtn);
+                Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                dialogVbox.getStyleClass().add("dialogBox");
+                dialog.setScene(dialogScene);
+                dialog.show();
+
+                EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                    g.deleteCustomer(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0)), primaryStage);
+                    dialog.close();
+                    viewCustomers(primaryStage);
+                    customersTable.refresh();
+                };
+                okBtn.setOnAction(okEvent);
             } catch (Exception ex) {
                 System.out.println("No appointment selected");
             }
@@ -455,6 +476,7 @@ public class AppointmentMaker extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
     public void updateCustomers(Stage primaryStage, int customerID) {
         //Get the current appointment
         ObservableList<String> curCsr;
@@ -553,7 +575,7 @@ public class AppointmentMaker extends Application {
         //Create the buttons
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
-            g.deleteCustomer(idField.getText());
+            g.deleteCustomer(idField.getText(), primaryStage);
             g.addCustomer(idField.getText(), nameField.getText(), divisionComboBox.getValue().toString(),
                     addressField.getText(), postalCodeField.getText(), phoneField.getText(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
                     currentUser, currentUser);

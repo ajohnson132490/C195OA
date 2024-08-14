@@ -2,6 +2,7 @@ package appointmentmaker;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.stage.Stage;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -206,23 +207,24 @@ public class CustomerHelpers {
         }
     }
 
-    public void deleteCustomer(String id) {
-        try {
-            //Delete associated appointments first
-            String query = "DELETE FROM appointments WHERE Customer_ID = ?";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, id);
-            stmt.executeUpdate();
+    public void deleteCustomer(String id, Stage primaryStage) {
 
-            //Delete csr
-            query = "DELETE FROM customers WHERE Customer_ID = ?";
-            stmt = conn.prepareStatement(query);
-            stmt.setString(1, id);
-            stmt.executeUpdate();
+                try {
+                    //Delete associated appointments first
+                    String query = "DELETE FROM appointments WHERE Customer_ID = ?";
+                    PreparedStatement stmt = conn.prepareStatement(query);
+                    stmt.setString(1, id);
+                    stmt.executeUpdate();
 
+                    //Delete csr
+                    query = "DELETE FROM customers WHERE Customer_ID = ?";
+                    stmt = conn.prepareStatement(query);
+                    stmt.setString(1, id);
+                    stmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println("deleteCustomer: " + e);
-        }
+                } catch (Exception ex) {
+                    System.out.println("deleteCustomer: " + ex);
+                }
+
     }
 }
