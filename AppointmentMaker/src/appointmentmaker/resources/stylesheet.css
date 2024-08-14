@@ -7,7 +7,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     Author     : LabUser
 */
 
-/*Login Page*/
+/* Login Page */
 .loginRoot {
     -fx-padding: 20;
     -fx-spacing: 50;
@@ -20,9 +20,15 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     -fx-max-width: 200;
 }
 
-/*Main customer and appointment Pages*/
+/* Main customer and appointment Pages */
 .mainPage {
     -fx-padding: 15 15 0 15;
     -fx-alignment: TOP_CENTER;
     -fx-pref-width: 1250;
+}
+
+/* Dialog Box */
+.dialogBox {
+    -fx-padding: 15 15 0 15;
+    -fx-alignment: TOP_CENTER;
 }
