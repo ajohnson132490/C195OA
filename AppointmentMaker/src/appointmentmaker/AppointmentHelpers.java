@@ -112,7 +112,6 @@ public class AppointmentHelpers {
         String[] splt = curTZ.split(":");
         splt = curTZ.split(":");
         int dif = -(Integer.parseInt(splt[0]));
-        System.out.println("Dif: " + dif);
 
         //Grab the current hour from the local time loc
         int curHour = Integer.parseInt(loc.substring(11,13));
