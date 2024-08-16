@@ -124,7 +124,7 @@ public class AppointmentHelpers {
         return formatter.format(cal.getTime());
     }
 
-    public String convertTimeToEST(String time, String timezone) {
+    public String convertTimeToEST(String time) {
         //Get my utc time into a DateFormat
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -185,8 +185,21 @@ public class AppointmentHelpers {
                         //Add the full row to the observableList
                         csrData.add(row);
                     }
-                } else if (time != 'w' && time != 'm') {
-                    throw new IllegalArgumentException("Time must be 'w' for week or 'm' for month");
+                } else if (time == 'a') {
+                    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                        //Add the data to a row
+                        if (rs.getMetaData().getColumnName(i).equals("Start") ||
+                                rs.getMetaData().getColumnName(i).equals("End") ||
+                                rs.getMetaData().getColumnName(i).equals("Last_Update") ||
+                                rs.getMetaData().getColumnName(i).equals("Create_Date")) {
+                            String s = rs.getString(i);
+                            row.add(convertTimeToLocal(s));
+                        } else {
+                            row.add(rs.getString(i));
+                        }
+                    }
+                    //Add the full row to the observableList
+                    csrData.add(row);
                 }
             }
         } catch (Exception e) {
@@ -640,8 +653,8 @@ public class AppointmentHelpers {
      */
     public boolean duringOfficeHours(String startTime, String endTime) {
         //Convert times from local to est
-        startTime = convertTimeToEST(startTime, "LOCAL");
-        endTime = convertTimeToEST(endTime, "LOCAL");
+        startTime = convertTimeToEST(startTime);
+        endTime = convertTimeToEST(endTime);
 
         //Format times into a localdatetime object for comparing
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -783,6 +796,50 @@ public class AppointmentHelpers {
      */
     public void setConnection(Connection conn) {
         this.conn = conn;
+    }
+
+    public void appointmentNotification(String currentUser, Stage primaryStage) {
+        try {
+            //Query the database for the customer
+            String query = "SELECT start, MIN(Hour(Start)), Minute(start) FROM appointments \n" +
+                    "LEFT JOIN users on appointments.User_ID = users.User_ID WHERE DATE(start) = CURDATE() AND users.User_Name = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, currentUser);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String startTime = convertTimeToLocal(rs.getString("start"));
+
+                //Format times into a localdatetime object for comparing
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime start = LocalDateTime.parse(startTime, formatter);
+                LocalDateTime current = LocalDateTime.now();
+
+                if (current.plusMinutes(15).isAfter(start) || current.minusMinutes(30).isAfter(start)) {
+                    final Stage dialog = new Stage();
+                    dialog.initModality(Modality.APPLICATION_MODAL);
+                    dialog.initOwner(primaryStage);
+                    VBox dialogVbox = new VBox(20);
+                    Button okBtn = new Button("Ok");
+                    dialogVbox.getChildren().add(new Text("Notice: \nThere is an appointment starting within 15 minutes"));
+                    dialogVbox.getChildren().add(okBtn);
+                    Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                    dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                    dialogVbox.getStyleClass().add("dialogBox");
+                    dialog.setScene(dialogScene);
+                    dialog.show();
+
+                    EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                        dialog.close();
+                    };
+                    okBtn.setOnAction(okEvent);
+                }
+
+
+            }
+        } catch (SQLException e) {
+            System.out.println("appointmentNotification: " + e);
+        }
     }
 }
 

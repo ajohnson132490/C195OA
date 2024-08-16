@@ -636,6 +636,9 @@ public class AppointmentMaker extends Application {
     }
 
     public void viewAppointments(Stage primaryStage) {
+        //Alert if there is an appointment within 15 minutes of logging in
+        h.appointmentNotification(currentUser, primaryStage);
+
         //Create the main VBox
         VBox mainVBox = new VBox(15);
         //Add all items to the root
@@ -661,12 +664,14 @@ public class AppointmentMaker extends Application {
         //Week or Month Radio Buttons
         HBox radioButtons = new HBox(20);
         ToggleGroup weekOrMonth = new ToggleGroup();
+        RadioButton all = new RadioButton("All");
+        all.setToggleGroup(weekOrMonth);
+        all.setSelected(true);
         RadioButton week = new RadioButton("Week");
         week.setToggleGroup(weekOrMonth);
-        week.setSelected(true);
         RadioButton month = new RadioButton("Month");
         month.setToggleGroup(weekOrMonth);
-        radioButtons.getChildren().addAll(week, month);
+        radioButtons.getChildren().addAll(all, week, month);
         tableVBox.getChildren().add(radioButtons);
         
         //All Appointments TableView Table
@@ -711,9 +716,16 @@ public class AppointmentMaker extends Application {
                     appointmentsTable.refresh();
                 }
             });
+            all.setOnAction ( e -> {
+                if (all.isSelected()) {
+                    csrData.set(h.getAppointments('a'));
+                    appointmentsTable.setItems(csrData.get());
+                    appointmentsTable.refresh();
+                }
+            });
 
             //Populate table with customer data
-            csrData.set(h.getAppointments('w'));
+            csrData.set(h.getAppointments('a'));
             appointmentsTable.setItems(csrData.get());
         } catch (SQLException e) {
             System.out.println("Populating the table in viewAppiontments: " + e);
@@ -738,7 +750,7 @@ public class AppointmentMaker extends Application {
             try {
                 updateAppointments(primaryStage, Integer.parseInt(String.valueOf(appointmentsTable.getSelectionModel().getSelectedItem().get(0))));
             } catch (Exception ex) {
-                System.out.println("No appointment selected" + ex);
+                System.out.println("No appointment selected " + ex);
             }
         };
         updateBtn.setOnAction(updateEvent);
@@ -823,7 +835,7 @@ public class AppointmentMaker extends Application {
             "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
             "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41",
             "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52",
-            "53", "54", "55", "56", "57", "58", "59", "60"};        
+            "53", "54", "55", "56", "57", "58", "59"};
         
         //Creating all Labels 
         Label id = new Label("ID");
@@ -978,7 +990,7 @@ public class AppointmentMaker extends Application {
                 "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
                 "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41",
                 "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52",
-                "53", "54", "55", "56", "57", "58", "59", "60"};
+                "53", "54", "55", "56", "57", "58", "59"};
 
         //Creating all Labels
         Label id = new Label("ID");
