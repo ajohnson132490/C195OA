@@ -402,7 +402,7 @@ public class AppointmentHelpers {
                     dialog.initOwner(primaryStage);
                     VBox dialogVbox = new VBox(20);
                     Button okBtn = new Button("Ok");
-                    dialogVbox.getChildren().add(new Text("Appointment not during office hours\n 9:00am EST - 10:00pm EST."));
+                    dialogVbox.getChildren().add(new Text("Appointment not during office hours\n 8:00am EST - 10:00pm EST."));
                     dialogVbox.getChildren().add(okBtn);
                     Scene dialogScene = new Scene(dialogVbox, 300, 100);
                     dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
@@ -542,7 +542,7 @@ public class AppointmentHelpers {
                     dialog.initOwner(primaryStage);
                     VBox dialogVbox = new VBox(20);
                     Button okBtn = new Button("Ok");
-                    dialogVbox.getChildren().add(new Text("Appointment not during office hours\n 9:00am EST - 10:00pm EST."));
+                    dialogVbox.getChildren().add(new Text("Appointment not during office hours\n 8:00am EST - 10:00pm EST."));
                     dialogVbox.getChildren().add(okBtn);
                     Scene dialogScene = new Scene(dialogVbox, 300, 100);
                     dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
@@ -618,7 +618,7 @@ public class AppointmentHelpers {
         System.out.println("Check start: " + start);
         System.out.println("Check end: " + end);
 
-        if (start.getHour() <= 8 || end.getHour() > 22 || end.getHour() <= 8 || (end.getHour() == 22 && end.getMinute() > 0)) {
+        if (start.getHour() < 8 || end.getHour() > 22 || end.getHour() < 8 || (end.getHour() == 22 && end.getMinute() > 0)) {
             return false;
         }
 
