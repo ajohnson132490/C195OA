@@ -2,7 +2,15 @@ package appointmentmaker;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,14 +19,13 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.logging.Level;
 
 /**
  * This class containts functions designed to abstract the functionality of creating, modifying,
@@ -82,19 +89,17 @@ public class AppointmentHelpers {
      */
     public String convertTimeToLocal(String utc) {
         //Get my utc time into a DateFormat
-        DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        java.util.Date date = null;
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
-            date = utcFormat.parse(utc);
-        } catch (ParseException ex) {
-            java.util.logging.Logger.getLogger(AppointmentMaker.class.getName()).log(Level.SEVERE, null, ex);
+            cal.setTime(formatter.parse(utc));
+        } catch (Exception e) {
         }
 
-        DateFormat localFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        localFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
+        formatter.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
 
-        return localFormat.format(date);
+        return formatter.format(cal.getTime());
     }
 
     /**
@@ -105,64 +110,34 @@ public class AppointmentHelpers {
      * @return the time in UTC timezone
      */
     public String convertTimeToUTC(String loc) {
-        //Get Time Zone Offset from UTC (which is always 0)
-        String curTZ = ZoneId.of(ZoneId.systemDefault().toString()).getRules().getOffset(Instant.now()).toString();
-
-        //Convert the offset to an int
-        String[] splt = curTZ.split(":");
-        splt = curTZ.split(":");
-        int dif = -(Integer.parseInt(splt[0]));
-
-        //Grab the current hour from the local time loc
-        int curHour = Integer.parseInt(loc.substring(11,13));
-        curHour += dif;
-        String newHour = "";
-
-        //Update the hour manually
-        if (curHour < 10) {
-            newHour = "0" + curHour;
-        } else {
-            newHour = String.valueOf(curHour);
+        //Get my utc time into a DateFormat
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        formatter.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
+        try {
+            cal.setTime(formatter.parse(loc));
+        } catch (Exception e) {
         }
 
-        //Update the local time string
-        String beg = loc.substring(0, 11);
-        String end = loc.substring(13);
-        loc = beg + newHour + end;
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        return loc;
+        return formatter.format(cal.getTime());
     }
 
     public String convertTimeToEST(String time, String timezone) {
-        String estTZ = ZoneId.of("America/New_York").getRules().getOffset(Instant.now()).toString();
-        String curTZ;
-
-        if (timezone.equals("LOCAL")) {
-            curTZ = ZoneId.of(ZoneId.systemDefault().toString()).getRules().getOffset(Instant.now()).toString();
-        } else {
-            curTZ = "0";
-        }
-        String[] splt = estTZ.split(":");
-        int est = -(Integer.parseInt(splt[0]));
-        splt = curTZ.split(":");
-        int cur = -(Integer.parseInt(splt[0]));
-        int dif = cur - est;
-
-        int curHour = Integer.parseInt(time.substring(11,13));
-        curHour += dif;
-        String newHour = "";
-
-        if (curHour < 10) {
-            newHour = "0" + curHour;
-        } else {
-            newHour = String.valueOf(curHour);
+        //Get my utc time into a DateFormat
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        formatter.setTimeZone(TimeZone.getTimeZone(ZoneId.of(ZoneId.systemDefault().toString())));
+        try {
+            cal.setTime(formatter.parse(time));
+        } catch (Exception e) {
+            System.out.println("convertToEST: " + e);
         }
 
-        String beg = time.substring(0, 11);
-        String end = time.substring(13);
-        time = beg + newHour + end;
+        formatter.setTimeZone(TimeZone.getTimeZone("America/New_York"));
 
-        return time;
+        return formatter.format(cal.getTime());
     }
 
     /**
@@ -383,7 +358,7 @@ public class AppointmentHelpers {
     public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
             String loc, String contact, String type, DatePicker sDate, String sTHour,
             String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
-            String csr, String user) {
+            String csr, String user, Stage primaryStage) {
         try {
             //Query the database for the user
             String query = "SELECT * FROM users WHERE User_ID = ?";
@@ -422,6 +397,23 @@ public class AppointmentHelpers {
                 endTime = formatter.parse(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00");
                 if (!duringOfficeHours(formatter.format(startTime),
                         formatter.format(endTime))) {
+                    final Stage dialog = new Stage();
+                    dialog.initModality(Modality.APPLICATION_MODAL);
+                    dialog.initOwner(primaryStage);
+                    VBox dialogVbox = new VBox(20);
+                    Button okBtn = new Button("Ok");
+                    dialogVbox.getChildren().add(new Text("Appointment not during office hours\n 9:00am EST - 10:00pm EST."));
+                    dialogVbox.getChildren().add(okBtn);
+                    Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                    dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                    dialogVbox.getStyleClass().add("dialogBox");
+                    dialog.setScene(dialogScene);
+                    dialog.show();
+
+                    EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                        dialog.close();
+                    };
+                    okBtn.setOnAction(okEvent);
                     System.out.println("Appointment not during business hours");
                     return false;
                 }
@@ -474,7 +466,7 @@ public class AppointmentHelpers {
     }
 
     /**
-     * This function validates that the data entered into the add appointment page is valid.
+     * This function validates that the data entered into the update appointment page is valid.
      * <p>
      * Its validity is verified by confirming that the user and customer exist, that the
      * appointment is during office hours, and that the appointment doesn't overlap with
@@ -506,7 +498,7 @@ public class AppointmentHelpers {
     public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
                                     String loc, String contact, String type, DatePicker sDate, String sTHour,
                                     String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
-                                    String csr, String user, String createdBy, String creationDate) {
+                                    String csr, String user, String createdBy, String creationDate, Stage primaryStage) {
         try {
             //Query the database for the user
             String query = "SELECT * FROM users WHERE User_ID = ?";
@@ -545,7 +537,23 @@ public class AppointmentHelpers {
                 endTime = formatter.parse(endDate.toString() + " " + eTHour + ":" + eTMinute + ":00");
                 if (!duringOfficeHours(formatter.format(startTime),
                         formatter.format(endTime))) {
-                    System.out.println("Appointment not during business hours");
+                    final Stage dialog = new Stage();
+                    dialog.initModality(Modality.APPLICATION_MODAL);
+                    dialog.initOwner(primaryStage);
+                    VBox dialogVbox = new VBox(20);
+                    Button okBtn = new Button("Ok");
+                    dialogVbox.getChildren().add(new Text("Appointment not during office hours\n 9:00am EST - 10:00pm EST."));
+                    dialogVbox.getChildren().add(okBtn);
+                    Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                    dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                    dialogVbox.getStyleClass().add("dialogBox");
+                    dialog.setScene(dialogScene);
+                    dialog.show();
+
+                    EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                        dialog.close();
+                    };
+                    okBtn.setOnAction(okEvent);
                     return false;
                 }
                 startTime = formatter.parse(convertTimeToUTC(formatter.format(startTime)));
@@ -570,9 +578,6 @@ public class AppointmentHelpers {
                 //Format and compare dates
                 Date tempStart = formatter.parse(rs.getString(1));
                 Date tempEnd = formatter.parse(rs.getString(2));
-
-                int resultStart = startTime.compareTo(tempStart);
-                int resultEnd = endTime.compareTo(tempEnd);
 
                 //Throw an error if there's an appointment with an overlap
                 if (startTime.before(tempEnd) && endTime.after(tempStart)) {
@@ -610,8 +615,10 @@ public class AppointmentHelpers {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime start = LocalDateTime.parse(startTime, formatter);
         LocalDateTime end = LocalDateTime.parse(endTime, formatter);
+        System.out.println("Check start: " + start);
+        System.out.println("Check end: " + end);
 
-        if (start.getHour() < 8 || end.getHour() > 22 || (end.getHour() == 22 && end.getMinute() > 0)) {
+        if (start.getHour() <= 8 || end.getHour() > 22 || end.getHour() <= 8 || (end.getHour() == 22 && end.getMinute() > 0)) {
             return false;
         }
 

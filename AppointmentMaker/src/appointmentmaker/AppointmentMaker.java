@@ -861,7 +861,7 @@ public class AppointmentMaker extends Application {
                     descField.getText(), locField.getText(), contactField.getValue().toString(),
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
-                    eTMinute.getValue().toString(), csrField.getText(), userField.getText())) {
+                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), primaryStage)) {
                 viewAppointments(primaryStage);
             } else {
                 System.out.println("Error validating appointment data. Please recheck all values.");
@@ -1021,7 +1021,7 @@ public class AppointmentMaker extends Application {
                     descField.getText(), locField.getText(), contactField.getValue().toString(),
                     typeField.getText(), sDateField, sTHour.getValue().toString(),
                     sTMinute.getValue().toString(), eDateField, eTHour.getValue().toString(),
-                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), oldAppt[8], oldAppt[7])) {
+                    eTMinute.getValue().toString(), csrField.getText(), userField.getText(), oldAppt[8], oldAppt[7], primaryStage)) {
                 viewAppointments(primaryStage);
             } else {
                 System.out.println("Error validating appointment data. Please recheck all values.");
