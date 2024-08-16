@@ -115,7 +115,23 @@ public class AppointmentMaker extends Application {
                     currentUser = uField.getText();
                     viewCustomers(primaryStage);
                 } else {
-                    System.out.println("Username or password is incorrect");
+                    final Stage dialog = new Stage();
+                    dialog.initModality(Modality.APPLICATION_MODAL);
+                    dialog.initOwner(primaryStage);
+                    VBox dialogVbox = new VBox(20);
+                    Button okBtn = new Button("Ok");
+                    dialogVbox.getChildren().add(new Text("Username or password is incorrect"));
+                    dialogVbox.getChildren().add(okBtn);
+                    Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                    dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                    dialogVbox.getStyleClass().add("dialogBox");
+                    dialog.setScene(dialogScene);
+                    dialog.show();
+
+                    EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                        dialog.close();
+                    };
+                    okBtn.setOnAction(okEvent);
                 }
             } catch (Exception e) {
                 System.out.println("Log In attempt: " + e);

@@ -445,7 +445,23 @@ public class AppointmentHelpers {
 
                 //Throw an error if there's an appointment with an overlap
                 if (startTime.before(tempEnd) && endTime.after(tempStart)) {
-                    System.out.println("This appointment overlaps with an existing appointment for this customer.");
+                    final Stage dialog = new Stage();
+                    dialog.initModality(Modality.APPLICATION_MODAL);
+                    dialog.initOwner(primaryStage);
+                    VBox dialogVbox = new VBox(20);
+                    Button okBtn = new Button("Ok");
+                    dialogVbox.getChildren().add(new Text("This appointment overlaps with an \nexisting appointment for this customer."));
+                    dialogVbox.getChildren().add(okBtn);
+                    Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                    dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                    dialogVbox.getStyleClass().add("dialogBox");
+                    dialog.setScene(dialogScene);
+                    dialog.show();
+
+                    EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                        dialog.close();
+                    };
+                    okBtn.setOnAction(okEvent);
                     return false;
                 }        
             }
@@ -581,7 +597,23 @@ public class AppointmentHelpers {
 
                 //Throw an error if there's an appointment with an overlap
                 if (startTime.before(tempEnd) && endTime.after(tempStart)) {
-                    System.out.println("This appointment overlaps with an existing appointment for this customer.");
+                    final Stage dialog = new Stage();
+                    dialog.initModality(Modality.APPLICATION_MODAL);
+                    dialog.initOwner(primaryStage);
+                    VBox dialogVbox = new VBox(20);
+                    Button okBtn = new Button("Ok");
+                    dialogVbox.getChildren().add(new Text("This appointment overlaps with an \nexisting appointment for this customer."));
+                    dialogVbox.getChildren().add(okBtn);
+                    Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                    dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                    dialogVbox.getStyleClass().add("dialogBox");
+                    dialog.setScene(dialogScene);
+                    dialog.show();
+
+                    EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                        dialog.close();
+                    };
+                    okBtn.setOnAction(okEvent);
                     return false;
                 }
             }
@@ -615,8 +647,6 @@ public class AppointmentHelpers {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime start = LocalDateTime.parse(startTime, formatter);
         LocalDateTime end = LocalDateTime.parse(endTime, formatter);
-        System.out.println("Check start: " + start);
-        System.out.println("Check end: " + end);
 
         if (start.getHour() < 8 || end.getHour() > 22 || end.getHour() < 8 || (end.getHour() == 22 && end.getMinute() > 0)) {
             return false;

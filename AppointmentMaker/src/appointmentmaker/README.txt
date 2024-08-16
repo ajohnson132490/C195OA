@@ -1,5 +1,6 @@
 TO DO LIST
 Appointments
+•  create an "all" radio button
 
 Customers
 
@@ -18,13 +19,10 @@ README.txt
 
 Other
 •  Translate log in page into french
-•  alert when there is an appointment within 15 minutes of login
 •  make language location dependent and find a way to test it
 •  do javadoc comments
 •  create index.html of all comments based on oracles guidelines for javadoc tool best practices (justify lambda expressions)
 •  log all login attempts in login_activity.txt
 
 Popups needed
-•  scheduling an appointment outside of business hours defined as 8:00 a.m. to 10:00 p.m. ET, including weekends
-•  scheduling overlapping appointments for customers
-•  entering an incorrect username and password
+•  alert when there is an appointment within 15 minutes of login
