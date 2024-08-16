@@ -5,9 +5,7 @@ Appointments
 Customers
 
 Reports
-•  make the reports
-•  make reports page/buttons?
-•  design a new report
+•  make reports page
 
 README.txt
 •  title and purpose of the application
@@ -19,11 +17,9 @@ README.txt
 
 Other
 •  Translate log in page into french
-•  alert when there is an appointment within 15 minutes of login
 •  make language location dependent and find a way to test it
 •  do javadoc comments
 •  create index.html of all comments based on oracles guidelines for javadoc tool best practices (justify lambda expressions)
 •  log all login attempts in login_activity.txt
 
 Popups needed
-•  entering an incorrect username and password

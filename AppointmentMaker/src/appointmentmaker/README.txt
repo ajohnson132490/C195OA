@@ -1,13 +1,10 @@
 TO DO LIST
 Appointments
-•  create an "all" radio button
 
 Customers
 
 Reports
-•  make the reports
-•  make reports page/buttons?
-•  design a new report
+•  make reports page
 
 README.txt
 •  title and purpose of the application
@@ -25,4 +22,3 @@ Other
 •  log all login attempts in login_activity.txt
 
 Popups needed
-•  alert when there is an appointment within 15 minutes of login
