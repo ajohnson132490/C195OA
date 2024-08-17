@@ -1,6 +1,5 @@
 TO DO LIST
 Appointments
-•  create an "all" radio button
 
 Customers
 

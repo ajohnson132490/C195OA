@@ -76,7 +76,7 @@ public class AppointmentMaker extends Application {
         
         //Create the main VBox
         VBox mainVBox = new VBox();
-        Label title = new Label("Appointment Maker");
+        Label title = new Label(lang.getString("Appointment_Maker"));
         title.setStyle("-fx-font: 24 ariel;");
         mainVBox.getChildren().add(title);
         
@@ -84,17 +84,17 @@ public class AppointmentMaker extends Application {
         VBox form = new VBox();
         form.getStyleClass().add("loginForm");
         
-        Label uName = new Label("Username");
+        Label uName = new Label(lang.getString("Username"));
         TextField uField = new TextField();
         
-        Label pWord = new Label("Password");
+        Label pWord = new Label(lang.getString("Password"));
         TextField pField = new TextField();
         
         //Login Button
         HBox loginBtnPadding = new HBox();
         loginBtnPadding.setPadding(new Insets(10, 0, 0, 150));
-        Button loginBtn = new Button("Login");
-        loginBtn.setPrefWidth(50);
+        Button loginBtn = new Button(lang.getString("Login"));
+        loginBtn.setMinWidth(75);
         loginBtnPadding.getChildren().add(loginBtn);
         loginBtn.setOnAction(event -> {
             try {
@@ -176,7 +176,7 @@ public class AppointmentMaker extends Application {
         HBox lower = new HBox();
         lower.setPadding(new Insets(70, 0, 0, 150));
         ZoneId zoneID = ZoneId.systemDefault();
-        Label location = new Label("Location: " + zoneID.toString());
+        Label location = new Label(lang.getString("Location") + zoneID.toString());
         location.setPrefWidth(150);        
         lower.getChildren().add(location);
         mainVBox.getChildren().add(lower);
@@ -188,7 +188,7 @@ public class AppointmentMaker extends Application {
         mainVBox.getStyleClass().add("loginRoot");
         
         //Set Stage
-        primaryStage.setTitle("Login");
+        primaryStage.setTitle(lang.getString("Login"));
         primaryStage.setScene(scene);
         primaryStage.show();
     }
