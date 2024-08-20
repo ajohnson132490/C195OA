@@ -14,7 +14,5 @@ README.txt
 •  the MySQL Connector driver version number, including the update number (e.g., mysql-connector-java-8.1.23)
 
 Other
-•  do javadoc comments
-•  create index.html of all comments based on oracles guidelines for javadoc tool best practices (justify lambda expressions)
 
 Popups needed

@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"appointmentmaker","l":"AppointmentHelpers"},{"p":"appointmentmaker","l":"AppointmentMaker"},{"p":"appointmentmaker","l":"CustomerHelpers"},{"p":"appointmentmaker","l":"Reports"}];updateSearchResults();

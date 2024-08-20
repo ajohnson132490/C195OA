@@ -204,7 +204,7 @@ public class AppointmentHelpers {
      * the update appointment screen
      *
      * @param id the unique ID of the appointment being retrieved
-     * @return an ObservableList<String> containing all the appointment's data
+     * @return an ObservableList containing all the appointment's data
      */
     public ObservableList<String> getAppointment(int id) {
         try {
@@ -264,7 +264,7 @@ public class AppointmentHelpers {
      * Gets the names of all the contacts in the contact table
      * and returns it as a list.
      *
-     * @return an ObservableList<String> of all the contacts' names
+     * @return an ObservableList of all the contacts' names
      */
     public ObservableList<String> getAllContacts() {
         ObservableList<String> contacts = FXCollections.observableArrayList();
@@ -646,6 +646,8 @@ public class AppointmentHelpers {
     /**
      * Checks if the appointment ends by the end of the day.
      *
+     * @param startTime the starting time of the appointment
+     * @param endTime the ending time of the appointment
      * @return returns true if the appointment is during office hours, and false if the appointment goes past the end of the day
      */
     public boolean duringOfficeHours(String startTime, String endTime) {
@@ -800,7 +802,7 @@ public class AppointmentHelpers {
      * </p>
      *
      * @param currentUser  the current user logged in
-     * @param primaryStage
+     * @param primaryStage the primary stage of the application
      */
     public void appointmentNotification(String currentUser, Stage primaryStage) {
         try {
