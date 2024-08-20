@@ -136,7 +136,7 @@ public class AppointmentMaker extends Application {
                     dialog.initOwner(primaryStage);
                     VBox dialogVbox = new VBox(20);
                     Button okBtn = new Button("Ok");
-                    dialogVbox.getChildren().add(new Text("Username or password is incorrect"));
+                    dialogVbox.getChildren().add(new Text(lang.getString("Error")));
                     dialogVbox.getChildren().add(okBtn);
                     Scene dialogScene = new Scene(dialogVbox, 300, 100);
                     dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
