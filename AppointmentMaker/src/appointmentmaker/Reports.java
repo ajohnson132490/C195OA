@@ -7,17 +7,32 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 
+/**
+ * This class contains functions designed to generate 3 main reports.
+ *
+ * @author Austin Johnson
+ */
 public class Reports {
     private Connection conn;
 
+    /**
+     * This function sets the connection to the database
+     * used in the reports
+     *
+     * @param conn the database connection
+     */
     public void setConnection(Connection conn) {
         this.conn = conn;
     }
 
+    /**
+     * Generates a report of the total number of customer appointments by type and month
+     *
+     * @return an ObservableList of all the returned appointments
+     */
     public ObservableList<ObservableList> appointmentsReport() {
         ObservableList<ObservableList> appointmentData = FXCollections.observableArrayList();
         try {
@@ -88,6 +103,12 @@ public class Reports {
         return appointmentData;
     }
 
+    /**
+     * Generates a schedule for each contact in your organization that includes appointment ID,
+     * title, type and description, start date and time, end date and time, and customer ID
+     *
+     * @return an ObservableList of all the returned appointments sorted by contact
+     */
     public ObservableList<ObservableList> appointmentsSchedule() {
         ObservableList<ObservableList> appointmentData = FXCollections.observableArrayList();
         try {
@@ -121,6 +142,12 @@ public class Reports {
         return appointmentData;
     }
 
+    /**
+     * Generates a report detailing the current customer demographics, showing how many
+     * customers live in each country that the organization works with.
+     *
+     * @return an ObservableList of all customers sorted by country
+     */
     public ObservableList<ObservableList> customerDemographic() {
         ObservableList<ObservableList> appointmentData = FXCollections.observableArrayList();
         try {
@@ -147,6 +174,14 @@ public class Reports {
         return appointmentData;
     }
 
+    /**
+     * This function populates the reports page tableview with the correct
+     * column names
+     *
+     * @param table the table whose columns are being modified
+     * @param type the type of report being displayed. 1 is the appointmentsReport(),
+     *             2 is the appointmentsSchedule(). 3 is the customerDemographic().
+     */
     public void setColumns(TableView<ObservableList> table, int type) {
         try {
             table.getColumns().clear();

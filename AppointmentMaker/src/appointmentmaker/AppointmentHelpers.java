@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 /**
- * This class containts functions designed to abstract the functionality of creating, modifying,
+ * This class contains functions designed to abstract the functionality of creating, modifying,
  * deleting, and viewing appointments.
  *
  * @author Austin Johnson

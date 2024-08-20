@@ -2,26 +2,30 @@ package appointmentmaker;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.stage.Stage;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class CustomerHelpers {
     private Connection conn;
 
+    /**
+     * This function sets the connection to the database used by all the
+     * other functions
+     *
+     * @param conn the connection to the appointment maker database
+     */
     public void setConnection(Connection conn) {
         this.conn = conn;
     }
 
     /**
+     * Formats a given address for ease of viewing in the viewCustomers page
      *
-     * @param address
-     * @return
+     * @param address the address
+     * @return a formatted address including the country and address
      */
     public String formatAddress(String address) {
         try {
@@ -55,6 +59,12 @@ public class CustomerHelpers {
         }
     }
 
+    /**
+     * Finds the country that a division is in.
+     *
+     * @param divisionID the division id
+     * @return the country name
+     */
     public String getCountry(String divisionID) {
         try {
             //Find the country name
@@ -74,6 +84,12 @@ public class CustomerHelpers {
         }
     }
 
+    /**
+     * Finds the division name given the division id
+     *
+     * @param divisionID the division id
+     * @return the division name
+     */
     public String getDivision(String divisionID) {
         try {
             //Find the country name
@@ -92,6 +108,12 @@ public class CustomerHelpers {
         }
     }
 
+    /**
+     * Finds the division id given the name of the division.
+     *
+     * @param division the division name
+     * @return the division id
+     */
     private String getDivisionId(String division) {
         try {
             String query = "SELECT Division_ID FROM first_level_divisions WHERE Division = ?";
@@ -112,7 +134,7 @@ public class CustomerHelpers {
      * Finds the current highest csr ID and return the next lowest
      * unique ID
      *
-     * @return the lowest unique appointment ID
+     * @return the lowest unique customer ID
      */
     public int getNextCsrId() {
         try {
@@ -131,10 +153,10 @@ public class CustomerHelpers {
     }
 
     /**
-     * Finds a contact's ID given the name.
+     * Gets a customers information given their ID.
      *
-     * @param contact the name of the contact
-     * @return the contact's ID
+     * @param id the id of the customer
+     * @return the customer information
      */
     public ObservableList<String> getCustomer(int id) {
         try {
@@ -161,25 +183,19 @@ public class CustomerHelpers {
     }
 
     /**
-     * Adds an appointment to the database using the data from validateAppointment.
-     * <p>
-     * This function also explicitly sets the creation date.
+     * This function adds a customer to the database.
      *
-     * @param currentUser the user adding the appointment
-     * @param apptID the unique appointment id
-     * @param title the name of the appointment
-     * @param desc appointment description
-     * @param loc appointment location
-     * @param contact the appointment contact person
-     * @param type the type of appointment
-     * @param start the starting datetime
-     * @param end the ending datetime
-     * @param csr the customer
-     * @param user the user meeting with the customer
-     * @param creationDate the date the appointment was originally created
+     * @param csrID the customers ID
+     * @param name customers name
+     * @param division first level division where the customer lives
+     * @param address customers address
+     * @param postalCode customers zip code
+     * @param phone customers phone number
+     * @param createdBy who created the customer
+     * @param currentUser who last updated the customer
      */
     public void addCustomer(String csrID, String name, String division, String address,
-                             String postalCode, String phone, String creationDate, String createdBy, String currentUser) {
+                             String postalCode, String phone, String createdBy, String currentUser) {
         try {
             //Create the query
             String query = "INSERT INTO customers "
@@ -202,13 +218,18 @@ public class CustomerHelpers {
 
             //Execute
             stmt.executeUpdate();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.out.println(e);
         }
     }
 
-    public void deleteCustomer(String id, Stage primaryStage) {
-
+    /**
+     * This function removes all appointments for a given customer, then deletes the customer
+     * from the database.
+     *
+     * @param id the Customer_ID of the customer being deleted
+     */
+    public void deleteCustomer(String id) {
                 try {
                     //Delete associated appointments first
                     String query = "DELETE FROM appointments WHERE Customer_ID = ?";

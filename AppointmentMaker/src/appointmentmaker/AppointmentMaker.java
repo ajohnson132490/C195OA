@@ -29,11 +29,9 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.sql.*;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
@@ -349,7 +347,7 @@ public class AppointmentMaker extends Application {
                 dialog.show();
 
                 EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
-                    g.deleteCustomer(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0)), primaryStage);
+                    g.deleteCustomer(String.valueOf(customersTable.getSelectionModel().getSelectedItem().get(0)));
                     dialog.close();
                     viewCustomers(primaryStage);
                     customersTable.refresh();
@@ -486,7 +484,7 @@ public class AppointmentMaker extends Application {
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
             g.addCustomer(idField.getText(), nameField.getText(), divisionComboBox.getValue().toString(),
-                    addressField.getText(), postalCodeField.getText(), phoneField.getText(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                    addressField.getText(), postalCodeField.getText(), phoneField.getText(),
                    currentUser, currentUser);
             viewCustomers(primaryStage);
         };
@@ -626,9 +624,9 @@ public class AppointmentMaker extends Application {
         //Create the buttons
         Button add = new Button("Add");
         EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
-            g.deleteCustomer(idField.getText(), primaryStage);
+            g.deleteCustomer(idField.getText());
             g.addCustomer(idField.getText(), nameField.getText(), divisionComboBox.getValue().toString(),
-                    addressField.getText(), postalCodeField.getText(), phoneField.getText(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                    addressField.getText(), postalCodeField.getText(), phoneField.getText(),
                     currentUser, currentUser);
             viewCustomers(primaryStage);
         };
