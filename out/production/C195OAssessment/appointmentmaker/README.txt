@@ -4,7 +4,6 @@ Appointments
 Customers
 
 Reports
-•  make reports page
 
 README.txt
 •  title and purpose of the application
@@ -15,8 +14,6 @@ README.txt
 •  the MySQL Connector driver version number, including the update number (e.g., mysql-connector-java-8.1.23)
 
 Other
-•  Translate log in page into french
-•  make language location dependent and find a way to test it
 •  do javadoc comments
 •  create index.html of all comments based on oracles guidelines for javadoc tool best practices (justify lambda expressions)
 •  log all login attempts in login_activity.txt
