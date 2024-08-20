@@ -40,6 +40,10 @@ public class AppointmentHelpers {
      * This function formats all columns for the customer table 
      * into a more user-friendly format without all the underscores.
      * Any single word attributes are just passed along directly.
+     * <p>
+     *     Lambda function in switch statement added to
+     *     reduce the size of the switch statement.
+     * </p>
      * 
      * @param attribute
      * @return the formatted column name
@@ -62,6 +66,10 @@ public class AppointmentHelpers {
      * This function formats all columns for the appointment table 
      * into a more user-friendly format without all the underscores.
      * Any single word attributes are just passed along directly.
+     * <p>
+     *      Lambda function in switch statement added to
+     *      reduce the size of the switch statement.
+     * </p>
      * 
      * @param attribute
      * @return the formatted column name
@@ -356,6 +364,11 @@ public class AppointmentHelpers {
      * Its validity is verified by confirming that the user and customer exist, that the
      * appointment is during office hours, and that the appointment doesn't overlap with
      * any other appointment.
+     * </p>
+     * <p>
+     * Lambda used for closing the dialog window helps reduce the number of lines and
+     * complexity of the code.
+     * </p>
      *
      * @param currentUser the current user logged in
      * @param apptID the unique appointment id
@@ -460,9 +473,6 @@ public class AppointmentHelpers {
                 //Format and compare dates
                 Date tempStart = formatter.parse(rs.getString(1));
                 Date tempEnd = formatter.parse(rs.getString(2));
-                
-                int resultStart = startTime.compareTo(tempStart);
-                int resultEnd = endTime.compareTo(tempEnd);
 
                 //Throw an error if there's an appointment with an overlap
                 if (startTime.before(tempEnd) && endTime.after(tempStart)) {
@@ -508,9 +518,15 @@ public class AppointmentHelpers {
      * Its validity is verified by confirming that the user and customer exist, that the
      * appointment is during office hours, and that the appointment doesn't overlap with
      * any other appointment.
+     * </p>
      * <p>
      * This function explicitly notes the original appointment creator and creation date instead of assigning the
      * current user as the creator and the current date as the creation date.
+     * </p>
+     * <p>
+     * Lambda used for closing the dialog window helps reduce the number of lines and
+     * complexity of the code.
+     * </p>
      *
      * @param currentUser the current user logged in
      * @param apptID the unique appointment id
@@ -810,6 +826,10 @@ public class AppointmentHelpers {
     /**
      * Creates a notification window for the user if there is an appointment
      * within 15 minutes of the user logging in.
+     * <p>
+     * Lambda used for closing the dialog window helps reduce the number of lines and
+     * complexity of the code.
+     * </p>
      *
      * @param currentUser the current user logged in
      * @param primaryStage
