@@ -2,12 +2,19 @@ package appointmentmaker;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * This class contains functions designed to abstract the functionality of creating, modifying,
+ * deleting, and viewing customers.
+ *
+ * @author Austin Johnson
+ */
 public class CustomerHelpers {
     private Connection conn;
 
@@ -69,7 +76,7 @@ public class CustomerHelpers {
         try {
             //Find the country name
             String query = "SELECT Country FROM countries WHERE Country_ID = "
-            + "(SELECT Country_ID FROM first_level_divisions WHERE Division_ID = ?)";
+                    + "(SELECT Country_ID FROM first_level_divisions WHERE Division_ID = ?)";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, divisionID);
             ResultSet rs = stmt.executeQuery();
@@ -131,6 +138,32 @@ public class CustomerHelpers {
     }
 
     /**
+     * This function formats all columns for the customer table
+     * into a more user-friendly format without all the underscores.
+     * Any single word attributes are just passed along directly.
+     * <p>
+     * Lambda function in switch statement added to
+     * reduce the size of the switch statement.
+     * </p>
+     *
+     * @param attribute the unformatted column name
+     * @return the formatted column name
+     */
+    public String customerTableColumnName(String attribute) {
+        return switch (attribute) {
+            case "Customer_ID" -> "ID";
+            case "Customer_Name" -> "Name";
+            case "Postal_Code" -> "Zip Code";
+            case "Create_Date" -> "Create Date";
+            case "Created_By" -> "Created By";
+            case "Last_Update" -> "Last Updated";
+            case "Last_Updated_By" -> "Last Updated By";
+            case "Division_ID" -> "Division ID";
+            default -> attribute;
+        };
+    }
+
+    /**
      * Finds the current highest csr ID and return the next lowest
      * unique ID
      *
@@ -166,7 +199,7 @@ public class CustomerHelpers {
             ResultSet rs = stmt.executeQuery();
 
             //Populate the customers data into the data ObservableList
-            while(rs.next()) {
+            if (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     //Add the data to a row
@@ -177,7 +210,8 @@ public class CustomerHelpers {
                 return row;
             }
         } catch (Exception e) {
-            System.out.println("getCustomer: " + e);        }
+            System.out.println("getCustomer: " + e);
+        }
 
         return null;
     }
@@ -185,17 +219,17 @@ public class CustomerHelpers {
     /**
      * This function adds a customer to the database.
      *
-     * @param csrID the customers ID
-     * @param name customers name
-     * @param division first level division where the customer lives
-     * @param address customers address
-     * @param postalCode customers zip code
-     * @param phone customers phone number
-     * @param createdBy who created the customer
+     * @param csrID       the customers ID
+     * @param name        customers name
+     * @param division    first level division where the customer lives
+     * @param address     customers address
+     * @param postalCode  customers zip code
+     * @param phone       customers phone number
+     * @param createdBy   who created the customer
      * @param currentUser who last updated the customer
      */
     public void addCustomer(String csrID, String name, String division, String address,
-                             String postalCode, String phone, String createdBy, String currentUser) {
+                            String postalCode, String phone, String createdBy, String currentUser) {
         try {
             //Create the query
             String query = "INSERT INTO customers "
@@ -230,22 +264,22 @@ public class CustomerHelpers {
      * @param id the Customer_ID of the customer being deleted
      */
     public void deleteCustomer(String id) {
-                try {
-                    //Delete associated appointments first
-                    String query = "DELETE FROM appointments WHERE Customer_ID = ?";
-                    PreparedStatement stmt = conn.prepareStatement(query);
-                    stmt.setString(1, id);
-                    stmt.executeUpdate();
+        try {
+            //Delete associated appointments first
+            String query = "DELETE FROM appointments WHERE Customer_ID = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, id);
+            stmt.executeUpdate();
 
-                    //Delete csr
-                    query = "DELETE FROM customers WHERE Customer_ID = ?";
-                    stmt = conn.prepareStatement(query);
-                    stmt.setString(1, id);
-                    stmt.executeUpdate();
+            //Delete csr
+            query = "DELETE FROM customers WHERE Customer_ID = ?";
+            stmt = conn.prepareStatement(query);
+            stmt.setString(1, id);
+            stmt.executeUpdate();
 
-                } catch (Exception ex) {
-                    System.out.println("deleteCustomer: " + ex);
-                }
+        } catch (Exception ex) {
+            System.out.println("deleteCustomer: " + ex);
+        }
 
     }
 }

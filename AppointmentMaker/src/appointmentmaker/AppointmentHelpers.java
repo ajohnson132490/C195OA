@@ -37,41 +37,15 @@ public class AppointmentHelpers {
     private Connection conn;
 
     /**
-     * This function formats all columns for the customer table 
+     * This function formats all columns for the appointment table
      * into a more user-friendly format without all the underscores.
      * Any single word attributes are just passed along directly.
      * <p>
-     *     Lambda function in switch statement added to
-     *     reduce the size of the switch statement.
+     * Lambda function in switch statement added to
+     * reduce the size of the switch statement.
      * </p>
-     * 
-     * @param attribute
-     * @return the formatted column name
-     */
-    public String customerTableColumnName(String attribute) {
-        return switch (attribute) {
-            case "Customer_ID" -> "ID";
-            case "Customer_Name" -> "Name";
-            case "Postal_Code" -> "Zip Code";
-            case "Create_Date" -> "Create Date";
-            case "Created_By" -> "Created By";
-            case "Last_Update" -> "Last Updated";
-            case "Last_Updated_By" -> "Last Updated By";
-            case "Division_ID" -> "Division ID";
-            default -> attribute;
-        };
-    }
-    
-    /**
-     * This function formats all columns for the appointment table 
-     * into a more user-friendly format without all the underscores.
-     * Any single word attributes are just passed along directly.
-     * <p>
-     *      Lambda function in switch statement added to
-     *      reduce the size of the switch statement.
-     * </p>
-     * 
-     * @param attribute
+     *
+     * @param attribute the unform
      * @return the formatted column name
      */
     public String appointmentTableColumnName(String attribute) {
@@ -87,7 +61,7 @@ public class AppointmentHelpers {
             default -> attribute;
         };
     }
-    
+
     /**
      * Converts the given time from UTC to the local timezone on the
      * users' computer.
@@ -155,12 +129,12 @@ public class AppointmentHelpers {
     }
 
     /**
-     * This function finds all appointments within a given range, and returns 
+     * This function finds all appointments within a given range, and returns
      * all of those appointments in a list.
      * <p>
      * When time is 'w', the range is 7 days. When time is 'm', the range is 31 days.
      * When the time is 'a', it returns all appointments.
-     * 
+     *
      * @param time a char that allows the user to select a week or month time frame
      *             denoted by 'w' for week or 'm' for month or 'a' for all
      * @return an ObservableList of all the appointments within the specified range
@@ -171,18 +145,18 @@ public class AppointmentHelpers {
             String query = "SELECT * FROM appointments";
             ResultSet rs = conn.createStatement().executeQuery(query);
             //Populate the customers data into the data ObservableList
-            while(rs.next()) {
+            while (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
-                
+
                 //Get current datetime and the appointment datetime
                 DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                LocalDateTime now = LocalDateTime.now(); 
+                LocalDateTime now = LocalDateTime.now();
                 java.util.Date current = Date.from(now.atZone(TimeZone.getTimeZone("UTC").toZoneId()).toInstant());
                 java.util.Date appointmentStart = format.parse(rs.getString(6));
-                
+
                 //Check the difference
-                if (current.getTime() <= appointmentStart.getTime()){
-                    long difference = ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24)% 365);
+                if (current.getTime() <= appointmentStart.getTime()) {
+                    long difference = ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24) % 365);
 
                     if (time == 'w' && difference >= -7 || time == 'm' && difference >= -31) {
                         for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
@@ -220,7 +194,7 @@ public class AppointmentHelpers {
         } catch (Exception e) {
             System.out.println("getAppointments: " + e);
         }
-        
+
         return csrData;
     }
 
@@ -240,7 +214,7 @@ public class AppointmentHelpers {
             ResultSet rs = stmt.executeQuery();
 
             //Populate the customers data into the data ObservableList
-            while(rs.next()) {
+            while (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     //Add the data to a row
@@ -271,19 +245,19 @@ public class AppointmentHelpers {
      * @return the lowest unique appointment ID
      */
     public int getNextApptId() {
-         try {
+        try {
             //Query the database
             String query = "SELECT MAX(Appointment_ID) FROM appointments";
             ResultSet rs = conn.createStatement().executeQuery(query);
             rs.next();
-            
+
             return rs.getInt(1) + 1;
-            
-         } catch (Exception e) {
-             System.out.println("getNextApptID: " + e);
-         }
-         
-         return -1;
+
+        } catch (Exception e) {
+            System.out.println("getNextApptID: " + e);
+        }
+
+        return -1;
     }
 
     /**
@@ -302,12 +276,12 @@ public class AppointmentHelpers {
                 contacts.add(rs.getString(1));
             }
             return contacts;
-            
-         } catch (Exception e) {
-             System.out.println("getAllContats: " + e);
-         }
-         
-         return null;
+
+        } catch (Exception e) {
+            System.out.println("getAllContats: " + e);
+        }
+
+        return null;
     }
 
     /**
@@ -370,48 +344,47 @@ public class AppointmentHelpers {
      * complexity of the code.
      * </p>
      *
-     * @param currentUser the current user logged in
-     * @param apptID the unique appointment id
-     * @param title the name of the appointment
-     * @param desc appointment description
-     * @param loc appointment location
-     * @param contact the appointment contact person
-     * @param type the type of appointment
-     * @param sDate the day the appointment starts
-     * @param sTHour the hour the appointment starts
-     * @param sTMinute the minute the appointment starts
-     * @param eDate the day the appointment ends
-     * @param eTHour the hour the appointment ends
-     * @param eTMinute the minute the appointment ends
-     * @param csr the customer
-     * @param user the user meeting with the customer
+     * @param currentUser  the current user logged in
+     * @param apptID       the unique appointment id
+     * @param title        the name of the appointment
+     * @param desc         appointment description
+     * @param loc          appointment location
+     * @param contact      the appointment contact person
+     * @param type         the type of appointment
+     * @param sDate        the day the appointment starts
+     * @param sTHour       the hour the appointment starts
+     * @param sTMinute     the minute the appointment starts
+     * @param eDate        the day the appointment ends
+     * @param eTHour       the hour the appointment ends
+     * @param eTMinute     the minute the appointment ends
+     * @param csr          the customer
+     * @param user         the user meeting with the customer
      * @param primaryStage the primary stage of the project
-     *
      * @return returns true if validation was successful, false if there was an error
      */
     public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
-            String loc, String contact, String type, DatePicker sDate, String sTHour,
-            String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
-            String csr, String user, Stage primaryStage) {
+                                       String loc, String contact, String type, DatePicker sDate, String sTHour,
+                                       String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
+                                       String csr, String user, Stage primaryStage) {
         try {
             //Query the database for the user
             String query = "SELECT * FROM users WHERE User_ID = ?";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, user);
             ResultSet userRS = stmt.executeQuery();
-            
+
             //Query the database for the customer
             query = "SELECT * FROM customers WHERE Customer_ID = ?";
             stmt = conn.prepareStatement(query);
             stmt.setString(1, csr);
             ResultSet csrRS = stmt.executeQuery();
-            
+
             //Check for user
             if (!userRS.next()) {
                 System.out.println("Selected USER does not exist");
                 return false;
             }
-            
+
             //Check for customer
             if (!csrRS.next()) {
                 System.out.println("Selected CUSTOMER does not exist");
@@ -423,7 +396,7 @@ public class AppointmentHelpers {
             LocalDate endDate = eDate.getValue();
             Date startTime = null;
             Date endTime = null;
-            
+
             //Get my start and end time into date format for comparison
             DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             try {
@@ -458,17 +431,17 @@ public class AppointmentHelpers {
                 return false;
             }
 
-            if (startDate.compareTo(endDate) > 0) {
+            if (startDate.isAfter(endDate)) {
                 System.out.println("Start date must be before end date.");
                 return false;
-            } 
+            }
 
             //Query the database for all customer appointments
             query = "SELECT Start, End FROM appointments WHERE Customer_ID = ?";
             stmt = conn.prepareStatement(query);
             stmt.setString(1, csr);
             ResultSet rs = stmt.executeQuery();
-            
+
             while (rs.next()) {
                 //Format and compare dates
                 Date tempStart = formatter.parse(rs.getString(1));
@@ -494,7 +467,7 @@ public class AppointmentHelpers {
                     };
                     okBtn.setOnAction(okEvent);
                     return false;
-                }        
+                }
             }
 
             //Format the times correctly
@@ -503,8 +476,8 @@ public class AppointmentHelpers {
 
             //Add the appt
             addAppointment(currentUser, apptID, title, desc,
-            loc, contact, type, start, end, csr, user);
-            
+                    loc, contact, type, start, end, csr, user);
+
         } catch (Exception e) {
             System.out.println("validateAppointment: " + e);
             return false;
@@ -528,31 +501,30 @@ public class AppointmentHelpers {
      * complexity of the code.
      * </p>
      *
-     * @param currentUser the current user logged in
-     * @param apptID the unique appointment id
-     * @param title the name of the appointment
-     * @param desc appointment description
-     * @param loc appointment location
-     * @param contact the appointment contact person
-     * @param type the type of appointment
-     * @param sDate the day the appointment starts
-     * @param sTHour the hour the appointment starts
-     * @param sTMinute the minute the appointment starts
-     * @param eDate the day the appointment ends
-     * @param eTHour the hour the appointment ends
-     * @param eTMinute the minute the appointment ends
-     * @param csr the customer
-     * @param user the user meeting with the customer
-     * @param createdBy the user who created the appointment
+     * @param currentUser  the current user logged in
+     * @param apptID       the unique appointment id
+     * @param title        the name of the appointment
+     * @param desc         appointment description
+     * @param loc          appointment location
+     * @param contact      the appointment contact person
+     * @param type         the type of appointment
+     * @param sDate        the day the appointment starts
+     * @param sTHour       the hour the appointment starts
+     * @param sTMinute     the minute the appointment starts
+     * @param eDate        the day the appointment ends
+     * @param eTHour       the hour the appointment ends
+     * @param eTMinute     the minute the appointment ends
+     * @param csr          the customer
+     * @param user         the user meeting with the customer
+     * @param createdBy    the user who created the appointment
      * @param creationDate the day the appointment was first created
      * @param primaryStage the primary stage of the project
-     *
      * @return returns true if validation was sucessful, false if there was an error
      */
     public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
-                                    String loc, String contact, String type, DatePicker sDate, String sTHour,
-                                    String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
-                                    String csr, String user, String createdBy, String creationDate, Stage primaryStage) {
+                                       String loc, String contact, String type, DatePicker sDate, String sTHour,
+                                       String sTMinute, DatePicker eDate, String eTHour, String eTMinute,
+                                       String csr, String user, String createdBy, String creationDate, Stage primaryStage) {
         try {
             //Query the database for the user
             String query = "SELECT * FROM users WHERE User_ID = ?";
@@ -617,7 +589,7 @@ public class AppointmentHelpers {
                 return false;
             }
 
-            if (startDate.compareTo(endDate) > 0) {
+            if (startDate.isAfter(endDate)) {
                 System.out.println("Start date must be before end date.");
                 return false;
             }
@@ -686,57 +658,53 @@ public class AppointmentHelpers {
         LocalDateTime start = LocalDateTime.parse(startTime, formatter);
         LocalDateTime end = LocalDateTime.parse(endTime, formatter);
 
-        if (start.getHour() < 8 || end.getHour() > 22 || end.getHour() < 8 || (end.getHour() == 22 && end.getMinute() > 0)) {
-            return false;
-        }
-
-        return true;
+        return start.getHour() >= 8 && end.getHour() <= 22 && end.getHour() >= 8 && (end.getHour() != 22 || end.getMinute() <= 0);
     }
 
     /**
      * Adds an appointment to the database using the data from validateAppointment.
      *
      * @param currentUser the current user logged in
-     * @param apptID the unique appointment id
-     * @param title the name of the appointment
-     * @param desc appointment description
-     * @param loc appointment location
-     * @param contact the appointment contact person
-     * @param type the type of appointment
-     * @param start the starting datetime
-     * @param end the ending datetime
-     * @param csr the customer
-     * @param user the user meeting with the customer
+     * @param apptID      the unique appointment id
+     * @param title       the name of the appointment
+     * @param desc        appointment description
+     * @param loc         appointment location
+     * @param contact     the appointment contact person
+     * @param type        the type of appointment
+     * @param start       the starting datetime
+     * @param end         the ending datetime
+     * @param csr         the customer
+     * @param user        the user meeting with the customer
      */
     private void addAppointment(String currentUser, String apptID, String title, String desc,
-            String loc, String contact, String type, String start, String end,
-            String csr, String user) {
+                                String loc, String contact, String type, String start, String end,
+                                String csr, String user) {
         try {
             //Create the query
             String query = "INSERT INTO appointments "
-                        + "(Appointment_ID, Title, Description, Location, Type, Start, End,"
-                        + "Create_Date, Created_By, Last_Update, Last_Updated_By, Customer_ID,"
-                        + "User_ID, Contact_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                PreparedStatement stmt = conn.prepareStatement(query);
-                
-                //Set all the variables
-                stmt.setString(1, apptID);
-                stmt.setString(2, title);
-                stmt.setString(3, desc);
-                stmt.setString(4, loc);
-                stmt.setString(5, type);
-                stmt.setString(6, start);
-                stmt.setString(7, end);
-                stmt.setString(8, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-                stmt.setString(9, currentUser);
-                stmt.setString(10, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-                stmt.setString(11, currentUser);
-                stmt.setString(12, csr);
-                stmt.setString(13, user);
-                stmt.setString(14, getContact(contact));
-                
-                //Execute
-                stmt.executeUpdate();
+                    + "(Appointment_ID, Title, Description, Location, Type, Start, End,"
+                    + "Create_Date, Created_By, Last_Update, Last_Updated_By, Customer_ID,"
+                    + "User_ID, Contact_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+
+            //Set all the variables
+            stmt.setString(1, apptID);
+            stmt.setString(2, title);
+            stmt.setString(3, desc);
+            stmt.setString(4, loc);
+            stmt.setString(5, type);
+            stmt.setString(6, start);
+            stmt.setString(7, end);
+            stmt.setString(8, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            stmt.setString(9, currentUser);
+            stmt.setString(10, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            stmt.setString(11, currentUser);
+            stmt.setString(12, csr);
+            stmt.setString(13, user);
+            stmt.setString(14, getContact(contact));
+
+            //Execute
+            stmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("addAppointment: " + e);
         }
@@ -747,17 +715,17 @@ public class AppointmentHelpers {
      * <p>
      * This function also explicitly sets the creation date.
      *
-     * @param currentUser the current user logged in
-     * @param apptID the unique appointment id
-     * @param title the name of the appointment
-     * @param desc appointment description
-     * @param loc appointment location
-     * @param contact the appointment contact person
-     * @param type the type of appointment
-     * @param start the starting datetime
-     * @param end the ending datetime
-     * @param csr the customer
-     * @param user the user meeting with the customer
+     * @param currentUser  the current user logged in
+     * @param apptID       the unique appointment id
+     * @param title        the name of the appointment
+     * @param desc         appointment description
+     * @param loc          appointment location
+     * @param contact      the appointment contact person
+     * @param type         the type of appointment
+     * @param start        the starting datetime
+     * @param end          the ending datetime
+     * @param csr          the customer
+     * @param user         the user meeting with the customer
      * @param creationDate the date the appointment was originally created
      */
     private void addAppointment(String currentUser, String apptID, String title, String desc,
@@ -831,7 +799,7 @@ public class AppointmentHelpers {
      * complexity of the code.
      * </p>
      *
-     * @param currentUser the current user logged in
+     * @param currentUser  the current user logged in
      * @param primaryStage
      */
     public void appointmentNotification(String currentUser, Stage primaryStage) {

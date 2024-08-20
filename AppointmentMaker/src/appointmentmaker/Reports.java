@@ -7,6 +7,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 
@@ -40,7 +41,7 @@ public class Reports {
             String query = "SELECT DISTINCT type, Month(start), count(*) AS QTY FROM appointments GROUP BY type";
             ResultSet rs = conn.createStatement().executeQuery(query);
 
-            while(rs.next()) {
+            while (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
 
@@ -51,43 +52,43 @@ public class Reports {
 
                         //Switch the month from a number to the month name
                         switch (s) {
-                                case "1":
-                                    row.add("January");
-                                    break;
-                                case "2":
-                                    row.add("February");
-                                    break;
-                                case "3":
-                                    row.add("March");
-                                    break;
-                                case "4":
-                                    row.add("April");
-                                    break;
-                                case "5":
-                                    row.add("May");
-                                    break;
-                                case "6":
-                                    row.add("June");
-                                    break;
-                                case "7":
-                                    row.add("July");
-                                    break;
-                                case "8":
-                                    row.add("August");
-                                    break;
-                                case "9":
-                                    row.add("September");
-                                    break;
-                                case "10":
-                                    row.add("October");
-                                    break;
-                                case "11":
-                                    row.add("November");
-                                    break;
-                                case "12":
-                                    row.add("December");
-                                    break;
-                            }
+                            case "1":
+                                row.add("January");
+                                break;
+                            case "2":
+                                row.add("February");
+                                break;
+                            case "3":
+                                row.add("March");
+                                break;
+                            case "4":
+                                row.add("April");
+                                break;
+                            case "5":
+                                row.add("May");
+                                break;
+                            case "6":
+                                row.add("June");
+                                break;
+                            case "7":
+                                row.add("July");
+                                break;
+                            case "8":
+                                row.add("August");
+                                break;
+                            case "9":
+                                row.add("September");
+                                break;
+                            case "10":
+                                row.add("October");
+                                break;
+                            case "11":
+                                row.add("November");
+                                break;
+                            case "12":
+                                row.add("December");
+                                break;
+                        }
                     } else {
                         //Add the data to the row
                         row.add(rs.getString(i));
@@ -117,7 +118,7 @@ public class Reports {
                     "ORDER BY Contact_ID, Start";
             ResultSet rs = conn.createStatement().executeQuery(query);
 
-            while(rs.next()) {
+            while (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
 
@@ -158,7 +159,7 @@ public class Reports {
                     "ORDER BY countries.Country";
             ResultSet rs = conn.createStatement().executeQuery(query);
 
-            while(rs.next()) {
+            while (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     //Add the data to the row
@@ -179,13 +180,13 @@ public class Reports {
      * column names
      *
      * @param table the table whose columns are being modified
-     * @param type the type of report being displayed. 1 is the appointmentsReport(),
-     *             2 is the appointmentsSchedule(). 3 is the customerDemographic().
+     * @param type  the type of report being displayed. 1 is the appointmentsReport(),
+     *              2 is the appointmentsSchedule(). 3 is the customerDemographic().
      */
     public void setColumns(TableView<ObservableList> table, int type) {
         try {
             table.getColumns().clear();
-            String query = "";
+            String query;
             ResultSet rs;
             switch (type) {
                 case 1:
@@ -252,7 +253,7 @@ public class Reports {
                     break;
             }
         } catch (Exception e) {
-
+            System.out.println(e);
         }
     }
 }
