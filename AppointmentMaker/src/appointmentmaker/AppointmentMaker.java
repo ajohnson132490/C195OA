@@ -25,9 +25,13 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Locale;
@@ -48,6 +52,7 @@ public class AppointmentMaker extends Application {
     private ResourceBundle lang;
     private AppointmentHelpers h;
     private CustomerHelpers g;
+    private Reports f;
     private String currentUser;
     
     
@@ -64,9 +69,15 @@ public class AppointmentMaker extends Application {
     public void start(Stage primaryStage) {
         h = new AppointmentHelpers();
         g = new CustomerHelpers();
+        f = new Reports();
         ///Start on the Login screen
         //Set Language
-        locale = new Locale("fr", "FR");
+        ZoneId zoneID = ZoneId.systemDefault();
+        if (zoneID.toString().contains("Europe")) {
+            locale = new Locale("fr", "FR");
+        } else {
+            locale = new Locale("en", "US");
+        }
         lang = ResourceBundle.getBundle("appointmentmaker.lang", locale);
         
         //Create Scene
@@ -102,6 +113,7 @@ public class AppointmentMaker extends Application {
                 conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
                 h.setConnection(conn);
                 g.setConnection(conn);
+                f.setConnection(conn);
 
 
                 //Query the database
@@ -113,8 +125,10 @@ public class AppointmentMaker extends Application {
                 //Check if the password entered matches the username
                 if (rs.next() && rs.getString("Password").equals(pField.getText())) {
                     currentUser = uField.getText();
+                    loginAttempt(currentUser, "Successful");
                     viewCustomers(primaryStage);
                 } else {
+                    loginAttempt(uField.getText(), "Unsuccessful");
                     final Stage dialog = new Stage();
                     dialog.initModality(Modality.APPLICATION_MODAL);
                     dialog.initOwner(primaryStage);
@@ -144,6 +158,8 @@ public class AppointmentMaker extends Application {
                         //Connect to the database
                         conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
                         h.setConnection(conn);
+                        g.setConnection(conn);
+                        f.setConnection(conn);
 
                         //Query the database
                         String query = "SELECT Password FROM users WHERE User_Name = ?";
@@ -175,7 +191,6 @@ public class AppointmentMaker extends Application {
         //User Location
         HBox lower = new HBox();
         lower.setPadding(new Insets(70, 0, 0, 150));
-        ZoneId zoneID = ZoneId.systemDefault();
         Label location = new Label(lang.getString("Location") + zoneID.toString());
         location.setPrefWidth(150);        
         lower.getChildren().add(location);
@@ -199,7 +214,19 @@ public class AppointmentMaker extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-    
+
+    public void loginAttempt(String user, String successful) {
+        try(FileWriter fw = new FileWriter("login_activity.txt", true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter out = new PrintWriter(bw)) {
+
+            out.println(user + ", " + LocalDateTime.now() + ", " + successful);
+
+        } catch(Exception e) {
+            System.out.println(e);
+        }
+    }
+
     public void viewCustomers(Stage primaryStage) {
         //Create the main VBox
         VBox mainVBox = new VBox(15);
@@ -348,7 +375,7 @@ public class AppointmentMaker extends Application {
             viewAppointments(primaryStage);
         };
         viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
-        viewAppointmentsBtn.setPrefWidth(625);
+        viewAppointmentsBtn.setPrefWidth(425);
         viewAppointmentsBtn.setPrefHeight(75);
         
         Button viewCustomersBtn = new Button("View Customers");
@@ -356,11 +383,19 @@ public class AppointmentMaker extends Application {
             viewCustomers(primaryStage);
         };
         viewCustomersBtn.setOnAction(viewCustomersEvent);
-        viewCustomersBtn.setPrefWidth(625);
+        viewCustomersBtn.setPrefWidth(425);
         viewCustomersBtn.setPrefHeight(75);
+
+        Button viewReportsBtn = new Button("View Reports");
+        EventHandler<ActionEvent> viewReportsEvent = (ActionEvent e) -> {
+            viewReports(primaryStage);
+        };
+        viewReportsBtn.setOnAction(viewReportsEvent);
+        viewReportsBtn.setPrefWidth(425);
+        viewReportsBtn.setPrefHeight(75);
         
         //Add buttons to lower HBox
-        lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn);
+        lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn, viewReportsBtn);
         mainVBox.getChildren().add(lower);
         
         
@@ -773,7 +808,7 @@ public class AppointmentMaker extends Application {
 
         //Add the tableview VBox to the main VBox
         mainVBox.getChildren().add(tableVBox);
-        
+
         //Lower page controls
         HBox lower = new HBox();
         Button viewAppointmentsBtn = new Button("View Appointments");
@@ -781,19 +816,27 @@ public class AppointmentMaker extends Application {
             viewAppointments(primaryStage);
         };
         viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
-        viewAppointmentsBtn.setPrefWidth(625);
+        viewAppointmentsBtn.setPrefWidth(425);
         viewAppointmentsBtn.setPrefHeight(75);
-        
+
         Button viewCustomersBtn = new Button("View Customers");
         EventHandler<ActionEvent> viewCustomersEvent = (ActionEvent e) -> {
             viewCustomers(primaryStage);
         };
         viewCustomersBtn.setOnAction(viewCustomersEvent);
-        viewCustomersBtn.setPrefWidth(625);
+        viewCustomersBtn.setPrefWidth(425);
         viewCustomersBtn.setPrefHeight(75);
-        
+
+        Button viewReportsBtn = new Button("View Reports");
+        EventHandler<ActionEvent> viewReportsEvent = (ActionEvent e) -> {
+            viewReports(primaryStage);
+        };
+        viewReportsBtn.setOnAction(viewReportsEvent);
+        viewReportsBtn.setPrefWidth(425);
+        viewReportsBtn.setPrefHeight(75);
+
         //Add buttons to lower HBox
-        lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn);
+        lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn, viewReportsBtn);
         mainVBox.getChildren().add(lower);
         
         primaryStage.setTitle("View Appointments");
@@ -1108,5 +1151,116 @@ public class AppointmentMaker extends Application {
         primaryStage.setTitle("Update Appointment");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    public void viewReports(Stage primaryStage) {
+        //Create the main VBox
+        VBox mainVBox = new VBox(15);
+        //Add all items to the root
+        Pane root = new Pane();
+        root.getChildren().add(mainVBox);
+        mainVBox.getStyleClass().add("mainPage");
+
+        //Create Scene
+        Scene scene = new Scene(root, 1250, 625);
+        scene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+
+        //Create title HBox
+        HBox upper = new HBox();
+        upper.setAlignment(Pos.TOP_LEFT);
+        Label title = new Label("View Reports");
+        title.setStyle("-fx-font: 24 ariel;");
+        upper.getChildren().add(title);
+        mainVBox.getChildren().add(upper);
+
+        //Creating tableview VBox
+        VBox tableVBox = new VBox(5);
+
+        //Create the buttons
+        Button apptsBtn = new Button("Appointments Report");
+        Button scheduleBtn = new Button("Contact Schedule");
+        Button customersBtn = new Button("Customer Demographics");
+
+        //All Appointments TableView Table
+        TableView<ObservableList> reportTable = new TableView();
+        reportTable.setPrefWidth(1200);
+
+        try {
+            AtomicReference<ObservableList<ObservableList>> reportData = new AtomicReference<>(FXCollections.observableArrayList());
+
+            EventHandler<ActionEvent> addEvent = (ActionEvent e) -> {
+                f.setColumns(reportTable, 1);
+                reportData.set(f.appointmentsReport());
+                reportTable.setItems(reportData.get());
+                reportTable.refresh();
+            };
+            apptsBtn.setOnAction(addEvent);
+
+            EventHandler<ActionEvent> updateEvent = (ActionEvent e) -> {
+                f.setColumns(reportTable, 2);
+                reportData.set(f.appointmentsSchedule());
+                reportTable.setItems(reportData.get());
+                reportTable.refresh();
+            };
+            scheduleBtn.setOnAction(updateEvent);
+
+            EventHandler<ActionEvent> deleteEvent = (ActionEvent e) -> {
+                f.setColumns(reportTable, 3);
+                reportData.set(f.customerDemographic());
+                reportTable.setItems(reportData.get());
+                reportTable.refresh();
+            };
+            customersBtn.setOnAction(deleteEvent);
+
+            tableVBox.getChildren().add(reportTable);
+        } catch (Exception ex) {
+
+        }
+
+        //Buttons HBox
+        HBox buttons = new HBox(15);
+        buttons.setPadding(new Insets(0, 0, 0, 995));
+
+        //Add the buttons to the table VBox
+        buttons.getChildren().addAll(apptsBtn, scheduleBtn, customersBtn);
+        tableVBox.getChildren().add(buttons);
+
+        //Add the tableview VBox to the main VBox
+        mainVBox.getChildren().add(tableVBox);
+
+        //Lower page controls
+        HBox lower = new HBox();
+        Button viewAppointmentsBtn = new Button("View Appointments");
+        EventHandler<ActionEvent> viewAppointmentsEvent = (ActionEvent e) -> {
+            viewAppointments(primaryStage);
+        };
+        viewAppointmentsBtn.setOnAction(viewAppointmentsEvent);
+        viewAppointmentsBtn.setPrefWidth(425);
+        viewAppointmentsBtn.setPrefHeight(75);
+
+        Button viewCustomersBtn = new Button("View Customers");
+        EventHandler<ActionEvent> viewCustomersEvent = (ActionEvent e) -> {
+            viewCustomers(primaryStage);
+        };
+        viewCustomersBtn.setOnAction(viewCustomersEvent);
+        viewCustomersBtn.setPrefWidth(425);
+        viewCustomersBtn.setPrefHeight(75);
+
+        Button viewReportsBtn = new Button("View Reports");
+        EventHandler<ActionEvent> viewReportsEvent = (ActionEvent e) -> {
+            viewReports(primaryStage);
+        };
+        viewReportsBtn.setOnAction(viewReportsEvent);
+        viewReportsBtn.setPrefWidth(425);
+        viewReportsBtn.setPrefHeight(75);
+
+        //Add buttons to lower HBox
+        lower.getChildren().addAll(viewAppointmentsBtn, viewCustomersBtn, viewReportsBtn);
+        mainVBox.getChildren().add(lower);
+
+        primaryStage.setTitle("View Reports");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
     }
 }

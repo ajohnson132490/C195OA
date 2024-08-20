@@ -16,6 +16,5 @@ README.txt
 Other
 •  do javadoc comments
 •  create index.html of all comments based on oracles guidelines for javadoc tool best practices (justify lambda expressions)
-•  log all login attempts in login_activity.txt
 
 Popups needed

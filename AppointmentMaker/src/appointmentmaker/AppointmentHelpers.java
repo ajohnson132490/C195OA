@@ -38,7 +38,7 @@ public class AppointmentHelpers {
 
     /**
      * This function formats all columns for the customer table 
-     * into a more user friendly format without all of the underscores.
+     * into a more user-friendly format without all the underscores.
      * Any single word attributes are just passed along directly.
      * 
      * @param attribute
@@ -60,7 +60,7 @@ public class AppointmentHelpers {
     
     /**
      * This function formats all columns for the appointment table 
-     * into a more user friendly format without all of the underscores.
+     * into a more user-friendly format without all the underscores.
      * Any single word attributes are just passed along directly.
      * 
      * @param attribute
@@ -124,6 +124,12 @@ public class AppointmentHelpers {
         return formatter.format(cal.getTime());
     }
 
+    /**
+     * Converts the given time from local time to EST
+     *
+     * @param time the time in the local time zone
+     * @return the time in EST timezone
+     */
     public String convertTimeToEST(String time) {
         //Get my utc time into a DateFormat
         Calendar cal = Calendar.getInstance();
@@ -145,9 +151,10 @@ public class AppointmentHelpers {
      * all of those appointments in a list.
      * <p>
      * When time is 'w', the range is 7 days. When time is 'm', the range is 31 days.
+     * When the time is 'a', it returns all appointments.
      * 
      * @param time a char that allows the user to select a week or month time frame
-     *             denoted by 'w' for week or 'm' for month
+     *             denoted by 'w' for week or 'm' for month or 'a' for all
      * @return an ObservableList of all the appointments within the specified range
      */
     public ObservableList<ObservableList> getAppointments(char time) {
@@ -350,7 +357,7 @@ public class AppointmentHelpers {
      * appointment is during office hours, and that the appointment doesn't overlap with
      * any other appointment.
      *
-     * @param currentUser the current user creating the program
+     * @param currentUser the current user logged in
      * @param apptID the unique appointment id
      * @param title the name of the appointment
      * @param desc appointment description
@@ -365,8 +372,9 @@ public class AppointmentHelpers {
      * @param eTMinute the minute the appointment ends
      * @param csr the customer
      * @param user the user meeting with the customer
+     * @param primaryStage the primary stage of the project
      *
-     * @return returns true if validation was sucessful, false if there was an error
+     * @return returns true if validation was successful, false if there was an error
      */
     public boolean validateAppointment(String currentUser, String apptID, String title, String desc,
             String loc, String contact, String type, DatePicker sDate, String sTHour,
@@ -504,7 +512,7 @@ public class AppointmentHelpers {
      * This function explicitly notes the original appointment creator and creation date instead of assigning the
      * current user as the creator and the current date as the creation date.
      *
-     * @param currentUser the current user creating the program
+     * @param currentUser the current user logged in
      * @param apptID the unique appointment id
      * @param title the name of the appointment
      * @param desc appointment description
@@ -521,6 +529,7 @@ public class AppointmentHelpers {
      * @param user the user meeting with the customer
      * @param createdBy the user who created the appointment
      * @param creationDate the day the appointment was first created
+     * @param primaryStage the primary stage of the project
      *
      * @return returns true if validation was sucessful, false if there was an error
      */
@@ -671,7 +680,7 @@ public class AppointmentHelpers {
     /**
      * Adds an appointment to the database using the data from validateAppointment.
      *
-     * @param currentUser the user adding the appointment
+     * @param currentUser the current user logged in
      * @param apptID the unique appointment id
      * @param title the name of the appointment
      * @param desc appointment description
@@ -722,7 +731,7 @@ public class AppointmentHelpers {
      * <p>
      * This function also explicitly sets the creation date.
      *
-     * @param currentUser the user adding the appointment
+     * @param currentUser the current user logged in
      * @param apptID the unique appointment id
      * @param title the name of the appointment
      * @param desc appointment description
@@ -798,6 +807,13 @@ public class AppointmentHelpers {
         this.conn = conn;
     }
 
+    /**
+     * Creates a notification window for the user if there is an appointment
+     * within 15 minutes of the user logging in.
+     *
+     * @param currentUser the current user logged in
+     * @param primaryStage
+     */
     public void appointmentNotification(String currentUser, Stage primaryStage) {
         try {
             //Query the database for the customer
