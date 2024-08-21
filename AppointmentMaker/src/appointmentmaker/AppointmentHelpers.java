@@ -154,10 +154,23 @@ public class AppointmentHelpers {
                 java.util.Date current = Date.from(now.atZone(TimeZone.getTimeZone("UTC").toZoneId()).toInstant());
                 java.util.Date appointmentStart = format.parse(rs.getString(6));
 
-                //Check the difference
-                if (current.getTime() <= appointmentStart.getTime()) {
+                if (time == 'a') {
+                    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                        //Add the data to a row
+                        if (rs.getMetaData().getColumnName(i).equals("Start") ||
+                                rs.getMetaData().getColumnName(i).equals("End") ||
+                                rs.getMetaData().getColumnName(i).equals("Last_Update") ||
+                                rs.getMetaData().getColumnName(i).equals("Create_Date")) {
+                            String s = rs.getString(i);
+                            row.add(convertTimeToLocal(s));
+                        } else {
+                            row.add(rs.getString(i));
+                        }
+                    }
+                    //Add the full row to the observableList
+                    csrData.add(row);
+                } else if (current.getTime() <= appointmentStart.getTime()) {
                     long difference = ((current.getTime() - appointmentStart.getTime()) / (1000 * 60 * 60 * 24) % 365);
-
                     if (time == 'w' && difference >= -7 || time == 'm' && difference >= -31) {
                         for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                             //Add the data to a row
@@ -174,21 +187,6 @@ public class AppointmentHelpers {
                         //Add the full row to the observableList
                         csrData.add(row);
                     }
-                } else if (time == 'a') {
-                    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                        //Add the data to a row
-                        if (rs.getMetaData().getColumnName(i).equals("Start") ||
-                                rs.getMetaData().getColumnName(i).equals("End") ||
-                                rs.getMetaData().getColumnName(i).equals("Last_Update") ||
-                                rs.getMetaData().getColumnName(i).equals("Create_Date")) {
-                            String s = rs.getString(i);
-                            row.add(convertTimeToLocal(s));
-                        } else {
-                            row.add(rs.getString(i));
-                        }
-                    }
-                    //Add the full row to the observableList
-                    csrData.add(row);
                 }
             }
         } catch (Exception e) {
@@ -814,34 +812,35 @@ public class AppointmentHelpers {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                String startTime = convertTimeToLocal(rs.getString("start"));
+                String unformattedStart = rs.getString("start");
+                if (unformattedStart != null) {
+                    String startTime = convertTimeToLocal(unformattedStart);
 
-                //Format times into a localdatetime object for comparing
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                LocalDateTime start = LocalDateTime.parse(startTime, formatter);
-                LocalDateTime current = LocalDateTime.now();
+                    //Format times into a localdatetime object for comparing
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    LocalDateTime start = LocalDateTime.parse(startTime, formatter);
+                    LocalDateTime current = LocalDateTime.now();
 
-                if (current.plusMinutes(15).isAfter(start) || current.minusMinutes(30).isAfter(start)) {
-                    final Stage dialog = new Stage();
-                    dialog.initModality(Modality.APPLICATION_MODAL);
-                    dialog.initOwner(primaryStage);
-                    VBox dialogVbox = new VBox(20);
-                    Button okBtn = new Button("Ok");
-                    dialogVbox.getChildren().add(new Text("Notice: \nThere is an appointment starting within 15 minutes"));
-                    dialogVbox.getChildren().add(okBtn);
-                    Scene dialogScene = new Scene(dialogVbox, 300, 100);
-                    dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
-                    dialogVbox.getStyleClass().add("dialogBox");
-                    dialog.setScene(dialogScene);
-                    dialog.show();
+                    if (current.plusMinutes(15).isAfter(start) || current.minusMinutes(30).isBefore(start)) {
+                        final Stage dialog = new Stage();
+                        dialog.initModality(Modality.APPLICATION_MODAL);
+                        dialog.initOwner(primaryStage);
+                        VBox dialogVbox = new VBox(20);
+                        Button okBtn = new Button("Ok");
+                        dialogVbox.getChildren().add(new Text("Notice: \nThere is an appointment starting within 15 minutes"));
+                        dialogVbox.getChildren().add(okBtn);
+                        Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                        dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
+                        dialogVbox.getStyleClass().add("dialogBox");
+                        dialog.setScene(dialogScene);
+                        dialog.show();
 
-                    EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
-                        dialog.close();
-                    };
-                    okBtn.setOnAction(okEvent);
+                        EventHandler<ActionEvent> okEvent = (ActionEvent ee) -> {
+                            dialog.close();
+                        };
+                        okBtn.setOnAction(okEvent);
+                    }
                 }
-
-
             }
         } catch (SQLException e) {
             System.out.println("appointmentNotification: " + e);

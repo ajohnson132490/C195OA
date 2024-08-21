@@ -75,7 +75,8 @@ public class AppointmentMaker extends Application {
         //Set Language
         Locale locale;
         ZoneId zoneID = ZoneId.systemDefault();
-        if (zoneID.toString().contains("Europe")) {
+        Locale cur = Locale.getDefault();
+        if (cur.toString().contains("fr")) {
             locale = new Locale("fr", "FR");
         } else {
             locale = new Locale("en", "US");
