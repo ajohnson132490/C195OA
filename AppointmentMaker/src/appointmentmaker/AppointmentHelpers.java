@@ -805,7 +805,7 @@ public class AppointmentHelpers {
     public void appointmentNotification(String currentUser, Stage primaryStage) {
         try {
             //Query the database for the customer
-            String query = "SELECT start, MIN(Hour(Start)), Minute(start) FROM appointments \n" +
+            String query = "SELECT Appointment_ID, start, MIN(Hour(Start)), Minute(start) FROM appointments \n" +
                     "LEFT JOIN users on appointments.User_ID = users.User_ID WHERE DATE(start) = CURDATE() AND users.User_Name = ?";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, currentUser);
@@ -828,8 +828,10 @@ public class AppointmentHelpers {
                         VBox dialogVbox = new VBox(20);
                         Button okBtn = new Button("Ok");
                         dialogVbox.getChildren().add(new Text("Notice: \nThere is an appointment starting within 15 minutes"));
+                        dialogVbox.getChildren().add(new Text("Appointment ID: " + rs.getString("Appointment_ID")));
+                        dialogVbox.getChildren().add(new Text("Date and Time: " + startTime));
                         dialogVbox.getChildren().add(okBtn);
-                        Scene dialogScene = new Scene(dialogVbox, 300, 100);
+                        Scene dialogScene = new Scene(dialogVbox, 300, 200);
                         dialogScene.getStylesheets().add(getClass().getResource("resources/stylesheet.css").toExternalForm());
                         dialogVbox.getStyleClass().add("dialogBox");
                         dialog.setScene(dialogScene);
